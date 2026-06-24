@@ -33,13 +33,13 @@ window.addEventListener("resize", function () {
 window.addEventListener("keydown", function (event) {
     const key = event.keyCode; // Gets The Clicked Key
     switch (key) {
-        // Move Forward
+        // Move Up
         case 87:
-            doomguy.moveForward(); // Moves The Doomguy Forward
+            doomguy.moveUp(); // Moves The Doomguy Upwards
             break;
-        // Move Forward
+        // Move Up
         case 38:
-            doomguy.moveForward(); // Moves The Doomguy Forward
+            doomguy.moveUp(); // Moves The Doomguy Upwards
             break;
         // Move Left
         case 65:
@@ -49,13 +49,13 @@ window.addEventListener("keydown", function (event) {
         case 37:
             doomguy.moveLeft(); // Moves The Doomguy To The Left
             break;
-        // Move Backward
+        // Move Down
         case 83:
-            doomguy.moveBackward(); // Moves The Doomguy Backward
+            doomguy.moveDown(); // Moves The Doomguy Downwards
             break;
-        // Move Backward
+        // Move Down
         case 40:
-            doomguy.moveBackward(); // Moves The Doomguy Backward
+            doomguy.moveDown(); // Moves The Doomguy Downwards
             break;
         // Move Right
         case 68:
@@ -64,6 +64,9 @@ window.addEventListener("keydown", function (event) {
         // Move Right
         case 39:
             doomguy.moveRight(); // Moves The Doomguy To The Right
+            break;
+        case 32:
+            doomguy.shoot(); // Doomguy Shoots
             break;
     }
 });

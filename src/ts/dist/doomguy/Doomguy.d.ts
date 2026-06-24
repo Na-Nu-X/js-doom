@@ -23,10 +23,11 @@ export declare class Doomguy {
     constructor({ position, velocity }: Config);
     draw(ctx: CanvasRenderingContext2D): void;
     changeImage(image_set: string): void;
-    moveForward(): void;
+    moveUp(): void;
     moveLeft(): void;
-    moveBackward(): void;
+    moveDown(): void;
     moveRight(): void;
+    shoot(): void;
 }
 export {};
 //# sourceMappingURL=Doomguy.d.ts.map

@@ -1,4 +1,4 @@
-import { doomguy_textures } from "./data.js"
+import { doomguy as doomguy_sprites } from "./data.js"
 
 type Position = {
     x:number,
@@ -50,7 +50,7 @@ export class Doomguy {
         }
 
         this.current_frame = 0 // Sets The Initial Current Sprite Frame
-        this.max_frames = doomguy_textures.move_backward.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.max_frames = doomguy_sprites.move_down.frames.length // Sets The Default Amount Of Maximum Sprite Frames
         this.is_mirrored = false // Sets The Default Information If The Sprite Is Mirrored
         this.frame_counter = 0 // Sets The Initial Frame Counter Value
     }
@@ -108,31 +108,31 @@ export class Doomguy {
         const MAIN_PATH:string = "../../textures/doomguy/" // Defines The Main Path
 
         switch(image_set) {
-            case "move_forward":
-                this.max_frames = doomguy_textures.move_forward.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_textures.move_forward.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_textures.move_forward.mirrored // Stores The Information If The Current Sprite Is Mirrored
+            case "move_up":
+                this.max_frames = doomguy_sprites.move_up.frames.length // Sets The Amount Of Maximum Sprite Frames
+                this.image.src = `${MAIN_PATH + doomguy_sprites.move_up.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
+                this.is_mirrored = doomguy_sprites.move_up.mirrored // Stores The Information If The Current Sprite Is Mirrored
 
                 break
 
             case "move_left":
-                this.max_frames = doomguy_textures.move_left.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_textures.move_left.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_textures.move_left.mirrored // Stores The Information If The Current Sprite Is Mirrored
+                this.max_frames = doomguy_sprites.move_left.frames.length // Sets The Amount Of Maximum Sprite Frames
+                this.image.src = `${MAIN_PATH + doomguy_sprites.move_left.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
+                this.is_mirrored = doomguy_sprites.move_left.mirrored // Stores The Information If The Current Sprite Is Mirrored
 
                 break
 
-            case "move_backward":
-                this.max_frames = doomguy_textures.move_backward.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_textures.move_backward.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_textures.move_backward.mirrored // Stores The Information If The Current Sprite Is Mirrored
+            case "move_down":
+                this.max_frames = doomguy_sprites.move_down.frames.length // Sets The Amount Of Maximum Sprite Frames
+                this.image.src = `${MAIN_PATH + doomguy_sprites.move_down.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
+                this.is_mirrored = doomguy_sprites.move_down.mirrored // Stores The Information If The Current Sprite Is Mirrored
 
                 break
 
             case "move_right":
-                this.max_frames = doomguy_textures.move_right.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_textures.move_right.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_textures.move_right.mirrored // Stores The Information If The Current Sprite Is Mirrored
+                this.max_frames = doomguy_sprites.move_right.frames.length // Sets The Amount Of Maximum Sprite Frames
+                this.image.src = `${MAIN_PATH + doomguy_sprites.move_right.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
+                this.is_mirrored = doomguy_sprites.move_right.mirrored // Stores The Information If The Current Sprite Is Mirrored
 
                 break
         }
@@ -148,10 +148,10 @@ export class Doomguy {
         this.frame_counter += 1 // Increases The Frame Counter
     }
 
-    // Method For Move Forward The Doomguy
-    moveForward():void {
+    // Method For Move Up The Doomguy
+    moveUp():void {
         this.position.y -= this.velocity.x
-        this.changeImage("move_forward")
+        this.changeImage("move_up")
     }
 
     // Method For Move Left The Doomguy
@@ -160,15 +160,20 @@ export class Doomguy {
         this.changeImage("move_left")
     }
 
-    // Method For Move Backward The Doomguy
-    moveBackward():void {
+    // Method For Move Down The Doomguy
+    moveDown():void {
         this.position.y += this.velocity.x
-        this.changeImage("move_backward")
+        this.changeImage("move_down")
     }
 
     // Method For Move Right The Doomguy
     moveRight():void {
         this.position.x += this.velocity.x
         this.changeImage("move_right")
+    }
+
+    // Method For Shooting
+    shoot():void {
+        console.log("SHOOT")
     }
 }

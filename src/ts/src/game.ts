@@ -46,14 +46,14 @@ window.addEventListener("keydown", function(event:KeyboardEvent):void {
     const key:number = event.keyCode // Gets The Clicked Key
 
     switch(key) {
-        // Move Forward
+        // Move Up
         case 87:
-            doomguy.moveForward() // Moves The Doomguy Forward
+            doomguy.moveUp() // Moves The Doomguy Upwards
             break
 
-        // Move Forward
+        // Move Up
         case 38:
-            doomguy.moveForward() // Moves The Doomguy Forward
+            doomguy.moveUp() // Moves The Doomguy Upwards
             break
 
         // Move Left
@@ -66,14 +66,14 @@ window.addEventListener("keydown", function(event:KeyboardEvent):void {
             doomguy.moveLeft() // Moves The Doomguy To The Left
             break
 
-        // Move Backward
+        // Move Down
         case 83:
-            doomguy.moveBackward() // Moves The Doomguy Backward
+            doomguy.moveDown() // Moves The Doomguy Downwards
             break
 
-        // Move Backward
+        // Move Down
         case 40:
-            doomguy.moveBackward() // Moves The Doomguy Backward
+            doomguy.moveDown() // Moves The Doomguy Downwards
             break
 
         // Move Right
@@ -84,6 +84,10 @@ window.addEventListener("keydown", function(event:KeyboardEvent):void {
         // Move Right
         case 39:
             doomguy.moveRight() // Moves The Doomguy To The Right
+            break
+
+        case 32:
+            doomguy.shoot() // Doomguy Shoots
             break
     }
 })
