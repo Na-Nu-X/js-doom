@@ -1,33 +1,10 @@
-import { Doomguy } from "./doomguy/Doomguy.js";
+import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
 import { Imp } from "./imp/Imp.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
 const game_ctx = game.getContext("2d"); // Gets The Game CTX
 game.width = window.innerWidth; // Sets The Game Canvas Width
 game.height = window.innerHeight; // Sets The Game Canvas Height
-// Creates The Doomguy
-const doomguy = new Doomguy({
-    position: {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2
-    },
-    velocity: {
-        x: 2,
-        y: 2
-    },
-    is_moving: false
-});
-// Creates The Imp
-const imp = new Imp({
-    position: {
-        x: window.innerWidth - 100,
-        y: window.innerHeight - 100
-    },
-    velocity: {
-        x: 5,
-        y: 5
-    }
-});
-// Objekt, ktorý si pamätá stav kláves (true = drží sa, false = pustená)
+// Stores The Information Which Keys Are Pressed
 const keys = {
     w: false,
     a: false,
@@ -35,24 +12,95 @@ const keys = {
     d: false,
     space: false
 };
+// Creates The Doomguy
+const doomguy = new Doomguy({
+    // Sets The Spawn Position (Center Of The Screen)
+    position: {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+    },
+    // Sets The Movement Speed
+    velocity: {
+        x: 2,
+        y: 2
+    },
+    animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+    is_moving: false // Stores The Information That The Doomguy Isn't Moving
+});
+const all_bullets = []; // Stores All Bullets
+// Creates The Imp
+const imp = new Imp({
+    // Sets The Spawn Position
+    position: {
+        x: window.innerWidth - 100,
+        y: window.innerHeight - 100
+    },
+    // Sets The Movement Speed
+    velocity: {
+        x: 2,
+        y: 2
+    }
+});
+// Fubction For Get The Bullet Position
+function getBulletPosition(current_action, position_of_shooter) {
+    const position = {
+        x: 0,
+        y: 0
+    };
+    // Up Spawn Position
+    if (current_action === "shoot_up") {
+        position.x = position_of_shooter.x,
+            position.y = position_of_shooter.y - doomguy.size.height / 2;
+    }
+    // Left Spawn Position
+    if (current_action === "shoot_left") {
+        position.x = position_of_shooter.x - doomguy.size.width / 2,
+            position.y = position_of_shooter.y;
+    }
+    // Down Spawn Position
+    if (current_action === "shoot_down") {
+        position.x = position_of_shooter.x,
+            position.y = position_of_shooter.y;
+    }
+    // Right Spawn Position
+    if (current_action === "shoot_right") {
+        position.x = position_of_shooter.x + doomguy.size.width / 2,
+            position.y = position_of_shooter.y;
+    }
+    return position;
+}
 // Function For Initialize The Main Loop
 function mainLoop() {
     game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
-    game_ctx.fillStyle = "black";
-    doomguy.is_moving = false;
     if (keys.w)
-        doomguy.moveUp();
+        doomguy.moveUp(); // Moves The Doomguy Upwards
     if (keys.a)
-        doomguy.moveLeft();
+        doomguy.moveLeft(); // Moves The Doomguy To The Left
     if (keys.s)
-        doomguy.moveDown();
+        doomguy.moveDown(); // Moves The Doomguy Downwards
     if (keys.d)
-        doomguy.moveRight();
-    if (keys.space)
-        doomguy.shoot();
-    doomguy.update();
+        doomguy.moveRight(); // Moves The Doomguy To The Right
+    // Doomguy Shoot Functionality
+    if (keys.space && !doomguy.is_shooting) {
+        doomguy.shoot(); // Doomguy Shoots
+        const bullet_position = getBulletPosition(doomguy.current_action, doomguy.position); // Gets The Bullet Position
+        // Creates The Bullet
+        const bullet = new Bullet({
+            position: bullet_position, // Sets The Spawn Position
+            direction: doomguy.current_action // Sets The Fly Direction
+        });
+        all_bullets.push(bullet); // Stores The New Bullet To All Bullets
+    }
+    doomguy.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
+    doomguy.update(); // Updates The Doomguy's Frames
     doomguy.draw(game_ctx); // Draws The Doomguy
     imp.draw(game_ctx); // Draws The Imp
+    // Renders Every Bullet
+    for (let i = all_bullets.length - 1; i >= 0; i--) {
+        const one_bullet = all_bullets[i]; // Gets The Bullet
+        one_bullet.update(); // Updates The Bullet
+        one_bullet.draw(game_ctx); // Draws The Bullet
+    }
     requestAnimationFrame(mainLoop); // Loops The Main Loop
 }
 mainLoop(); // Initializes The Main Loop
@@ -63,71 +111,34 @@ window.addEventListener("resize", function () {
     game.height = window.innerHeight; // Updates The Game Canvas Height
 });
 // Global Event Delegations
-// Sledujeme stlačenie
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'w' || e.key === 'ArrowUp')
+// Window Keydown Functionalities
+window.addEventListener("keydown", function (event) {
+    const key = event.key; // Gets The Clicked Key
+    // Stores The Pressed Keys
+    if (key === "w" || key === "ArrowUp")
         keys.w = true;
-    if (e.key === 'a' || e.key === 'ArrowLeft')
+    if (key === "a" || key === "ArrowLeft")
         keys.a = true;
-    if (e.key === 's' || e.key === 'ArrowDown')
+    if (key === "s" || key === "ArrowDown")
         keys.s = true;
-    if (e.key === 'd' || e.key === 'ArrowRight')
+    if (key === "d" || key === "ArrowRight")
         keys.d = true;
-    if (e.key === ' ')
-        keys.space = true; // Medzerník pre streľbu
+    if (key === " ")
+        keys.space = true;
 });
-// Sledujeme pustenie klávesy
-window.addEventListener('keyup', (e) => {
-    if (e.key === 'w' || e.key === 'ArrowUp')
+// Window Keyup Functionalities
+window.addEventListener("keyup", function (event) {
+    const key = event.key; // Gets The Clicked Key
+    // Stores The Released Keys
+    if (key === "w" || key === "ArrowUp")
         keys.w = false;
-    if (e.key === 'a' || e.key === 'ArrowLeft')
+    if (key === "a" || key === "ArrowLeft")
         keys.a = false;
-    if (e.key === 's' || e.key === 'ArrowDown')
+    if (key === "s" || key === "ArrowDown")
         keys.s = false;
-    if (e.key === 'd' || e.key === 'ArrowRight')
+    if (key === "d" || key === "ArrowRight")
         keys.d = false;
-    if (e.key === ' ')
+    if (key === " ")
         keys.space = false;
 });
-// // Window Keydown Functionalities
-// window.addEventListener("keydown", function(event:KeyboardEvent):void {
-//     const key:number = event.keyCode // Gets The Clicked Key
-//     switch(key) {
-//         // Move Up
-//         case 87:
-//             doomguy.moveUp() // Moves The Doomguy Upwards
-//             break
-//         // Move Up
-//         case 38:
-//             doomguy.moveUp() // Moves The Doomguy Upwards
-//             break
-//         // Move Left
-//         case 65:
-//             doomguy.moveLeft() // Moves The Doomguy To The Left
-//             break
-//         // Move Left
-//         case 37:
-//             doomguy.moveLeft() // Moves The Doomguy To The Left
-//             break
-//         // Move Down
-//         case 83:
-//             doomguy.moveDown() // Moves The Doomguy Downwards
-//             break
-//         // Move Down
-//         case 40:
-//             doomguy.moveDown() // Moves The Doomguy Downwards
-//             break
-//         // Move Right
-//         case 68:
-//             doomguy.moveRight() // Moves The Doomguy To The Right
-//             break
-//         // Move Right
-//         case 39:
-//             doomguy.moveRight() // Moves The Doomguy To The Right
-//             break
-//         case 32:
-//             doomguy.shoot() // Doomguy Shoots
-//             break
-//     }
-// })
 //# sourceMappingURL=game.js.map

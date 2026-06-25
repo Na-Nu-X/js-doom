@@ -1,5 +1,11 @@
-import { Doomguy } from "./doomguy/Doomguy.js"
+import { 
+    Doomguy,
+    Bullet
+} from "./doomguy/Doomguy.js"
+
 import { Imp } from "./imp/Imp.js"
+
+import type { Position } from "./doomguy/Doomguy.js"
 
 const game:HTMLCanvasElement = document.querySelector(".game") as HTMLCanvasElement // Gets The Game Canvas
 const game_ctx:CanvasRenderingContext2D = game.getContext("2d") as CanvasRenderingContext2D // Gets The Game CTX
@@ -23,7 +29,7 @@ const keys:{
 }
 
 // Creates The Doomguy
-const doomguy = new Doomguy({
+const doomguy:Doomguy = new Doomguy({
     // Sets The Spawn Position (Center Of The Screen)
     position: { 
         x: window.innerWidth / 2, 
@@ -40,8 +46,10 @@ const doomguy = new Doomguy({
     is_moving: false // Stores The Information That The Doomguy Isn't Moving
 })
 
+const all_bullets:Bullet[] = [] // Stores All Bullets
+
 // Creates The Imp
-const imp = new Imp({
+const imp:Imp = new Imp({
     // Sets The Spawn Position
     position: { 
         x: window.innerWidth - 100, 
@@ -55,6 +63,40 @@ const imp = new Imp({
     }
 })
 
+// Fubction For Get The Bullet Position
+function getBulletPosition(current_action:string, position_of_shooter:Position):Position {
+    const position:Position = {
+        x: 0,
+        y: 0
+    }
+
+    // Up Spawn Position
+    if(current_action === "shoot_up") {
+        position.x = position_of_shooter.x,
+        position.y = position_of_shooter.y - doomguy.size.height / 2
+    }
+    
+    // Left Spawn Position
+    if(current_action === "shoot_left") {
+        position.x = position_of_shooter.x - doomguy.size.width / 2,
+        position.y = position_of_shooter.y
+    }
+
+    // Down Spawn Position
+    if(current_action === "shoot_down") {
+        position.x = position_of_shooter.x,
+        position.y = position_of_shooter.y
+    }
+
+    // Right Spawn Position
+    if(current_action === "shoot_right") {
+        position.x = position_of_shooter.x + doomguy.size.width / 2,
+        position.y = position_of_shooter.y
+    }
+
+    return position
+}
+
 // Function For Initialize The Main Loop
 function mainLoop():void {
     game_ctx.clearRect(0, 0, game.width, game.height) // Clears The Game CTX
@@ -63,13 +105,35 @@ function mainLoop():void {
     if(keys.a) doomguy.moveLeft() // Moves The Doomguy To The Left
     if(keys.s) doomguy.moveDown() // Moves The Doomguy Downwards
     if(keys.d) doomguy.moveRight() // Moves The Doomguy To The Right
-    if(keys.space) doomguy.shoot() // Doomguy Shoots
+
+    // Doomguy Shoot Functionality
+    if(keys.space && !doomguy.is_shooting) {
+        doomguy.shoot() // Doomguy Shoots
+
+        const bullet_position:Position = getBulletPosition(doomguy.current_action, doomguy.position) // Gets The Bullet Position
+
+        // Creates The Bullet
+        const bullet:Bullet = new Bullet({
+            position: bullet_position, // Sets The Spawn Position
+            direction: doomguy.current_action // Sets The Fly Direction
+        })
+
+        all_bullets.push(bullet) // Stores The New Bullet To All Bullets
+    }
 
     doomguy.is_moving = false // Stores The Information That The Doomguy Isn't Moving
     doomguy.update() // Updates The Doomguy's Frames
     doomguy.draw(game_ctx) // Draws The Doomguy
 
     imp.draw(game_ctx) // Draws The Imp
+
+    // Renders Every Bullet
+    for(let i:number = all_bullets.length - 1; i >= 0; i--) {
+        const one_bullet:Bullet = all_bullets[i] as Bullet // Gets The Bullet
+
+        one_bullet.update() // Updates The Bullet
+        one_bullet.draw(game_ctx) // Draws The Bullet
+    }
 
     requestAnimationFrame(mainLoop) // Loops The Main Loop
 }

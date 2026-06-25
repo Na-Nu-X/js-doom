@@ -1,32 +1,43 @@
-type Position = {
+export interface Position {
     x: number;
     y: number;
-};
-type Velocity = {
+}
+interface Size {
+    width: number;
+    height: number;
+}
+interface Velocity {
     x: number;
     y: number;
-};
-type Config = {
+}
+interface DoomguyConfig {
     position: Position;
     velocity: Velocity;
+    animation_slowdown_level: number;
     is_moving: boolean;
-};
+}
+interface BulletConfig {
+    position: Position;
+    velocity?: Velocity;
+    size?: Size;
+    direction: string;
+}
 export declare class Doomguy {
     position: Position;
     velocity: Velocity;
-    is_moving?: boolean;
+    animation_slowdown_level: number;
+    is_moving: boolean;
+    size: Size;
+    is_shooting: boolean;
+    current_action: string;
     private scale;
     private image;
-    private size;
     private current_frame;
     private max_frames;
     private is_mirrored;
     private frames_counter;
-    private current_action;
-    private last_used_sprite;
-    private is_shooting;
     private shoot_loops;
-    constructor({ position, velocity, is_moving }: Config);
+    constructor({ position, velocity, animation_slowdown_level }: DoomguyConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
     moveUp(): void;
@@ -34,6 +45,15 @@ export declare class Doomguy {
     moveDown(): void;
     moveRight(): void;
     shoot(): void;
+}
+export declare class Bullet {
+    position: Position;
+    velocity: Velocity;
+    size: Size;
+    direction: string;
+    constructor({ position, velocity, size, direction }: BulletConfig);
+    draw(ctx: CanvasRenderingContext2D): void;
+    update(): void;
 }
 export {};
 //# sourceMappingURL=Doomguy.d.ts.map

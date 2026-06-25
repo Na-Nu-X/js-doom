@@ -1,25 +1,32 @@
 import { doomguy as doomguy_sprites } from "./data.js"
 
-type Position = {
+export interface Position {
     x:number,
     y:number
 }
 
-type Size = {
+interface Size {
     width:number,
     height:number
 }
 
-type Velocity = {
+interface Velocity {
     x:number,
     y:number
 }
 
-type Config = {
+interface DoomguyConfig {
     position:Position,
-    velocity:Velocity
-    animation_slowdown_level:number
+    velocity:Velocity,
+    animation_slowdown_level:number,
     is_moving:boolean,
+}
+
+interface BulletConfig {
+    position:Position,
+    velocity?:Velocity,
+    size?:Size,
+    direction:string
 }
 
 export class Doomguy {
@@ -27,25 +34,23 @@ export class Doomguy {
     velocity:Velocity
     animation_slowdown_level:number
     is_moving:boolean
+    size:Size
+    is_shooting:boolean
+    current_action:string
 
     private scale:number
     private image:HTMLImageElement
-    private size:Size
     private current_frame:number
     private max_frames:number
     private is_mirrored:boolean
     private frames_counter:number
-    private current_action:string
-    private last_used_sprite:string
-    private is_shooting:boolean
     private shoot_loops:number
 
     constructor({
         position,
         velocity,
-        animation_slowdown_level,
-        is_moving
-    }:Config) {
+        animation_slowdown_level
+    }:DoomguyConfig) {
         this.position = position
         this.velocity = velocity
         this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
@@ -67,8 +72,6 @@ export class Doomguy {
         this.frames_counter = 0 // Sets The Initial Frames Counter Value
 
         this.current_action = "move_down" // Stores The Current Used Sprite
-        this.last_used_sprite = "" // Stores The Last Used Sprite
-
 
         this.is_shooting = false // Checks If The Doomguy Is Shooting
         this.shoot_loops = 0 // Stores The Amount Of Current Shooting Animation's Repetitions
@@ -109,6 +112,17 @@ export class Doomguy {
                 this.size.height
             )
         }
+
+        // Shows The Hitbox
+
+        ctx.strokeStyle = "red"
+
+        ctx.strokeRect(
+            this.position.x - this.size.width / 2,
+            this.position.y - this.size.height / 2,
+            this.size.width,
+            this.size.height
+        )
     }
 
     // Method For Update The Doomguy
@@ -199,5 +213,55 @@ export class Doomguy {
 
             if(this.current_action.startsWith("move")) this.current_action = this.current_action.replace("move", "shoot") // Replaces The Move Action With The Shoot Action
         }
+    }
+}
+
+export class Bullet {
+    position:Position
+    velocity:Velocity
+    size:Size
+    direction:string
+
+    constructor({
+        position,
+        velocity,
+        size,
+        direction
+    }:BulletConfig) {
+        this.position = position
+
+        // Sets The Movement Speed
+        this.velocity = { 
+            x: 10,
+            y: 10
+        },
+
+        // Sets The Size
+        this.size = {
+            width: 10,
+            height: 10
+        }
+
+        this.direction = direction
+    }
+
+    // Method For Draw The Bullet
+    draw(ctx:CanvasRenderingContext2D):void {
+        ctx.fillStyle = "yellow"
+
+        ctx.fillRect(
+            this.position.x - this.size.width / 2,
+            this.position.y - this.size.height / 2,
+            this.size.width,
+            this.size.height
+        )
+    }
+
+    // Method For Update The Bullet
+    update():void {
+        if(this.direction === "move_up") this.position.y -= this.velocity.y
+        if(this.direction === "move_left") this.position.x -= this.velocity.x
+        if(this.direction === "move_down") this.position.y += this.velocity.y
+        if(this.direction === "move_right") this.position.x += this.velocity.x
     }
 }
