@@ -1,4 +1,4 @@
-export declare const doomguy: {
+export declare const imp: {
     move_up: {
         frames: string[];
         mirrored: boolean;
@@ -40,12 +40,12 @@ export declare const doomguy: {
         mirrored: boolean;
     };
 };
-export declare const shot_decal: {
-    wall_hit: {
+export declare const imp_fireball: {
+    fly: {
         frames: string[];
         mirrored: boolean;
     };
-    enemy_hit: {
+    impact: {
         frames: string[];
         mirrored: boolean;
     };

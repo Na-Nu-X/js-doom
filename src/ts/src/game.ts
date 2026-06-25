@@ -1,4 +1,5 @@
 import { Doomguy } from "./doomguy/Doomguy.js"
+import { Imp } from "./imp/Imp.js"
 
 const game:HTMLCanvasElement = document.querySelector(".game") as HTMLCanvasElement // Gets The Game Canvas
 const game_ctx:CanvasRenderingContext2D = game.getContext("2d") as CanvasRenderingContext2D // Gets The Game CTX
@@ -6,25 +7,69 @@ const game_ctx:CanvasRenderingContext2D = game.getContext("2d") as CanvasRenderi
 game.width = window.innerWidth // Sets The Game Canvas Width
 game.height = window.innerHeight // Sets The Game Canvas Height
 
+// Stores The Information Which Keys Are Pressed
+const keys:{
+    w:boolean,
+    a:boolean,
+    s:boolean,
+    d:boolean,
+    space:boolean
+} = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    space: false
+}
+
 // Creates The Doomguy
 const doomguy = new Doomguy({
+    // Sets The Spawn Position (Center Of The Screen)
     position: { 
         x: window.innerWidth / 2, 
         y: window.innerHeight / 2 
     },
 
+    // Sets The Movement Speed
     velocity: { 
-        x: 5, 
-        y: 5 
+        x: 2,
+        y: 2
+    },
+
+    animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+    is_moving: false // Stores The Information That The Doomguy Isn't Moving
+})
+
+// Creates The Imp
+const imp = new Imp({
+    // Sets The Spawn Position
+    position: { 
+        x: window.innerWidth - 100, 
+        y: window.innerHeight - 100 
+    },
+
+    // Sets The Movement Speed
+    velocity: { 
+        x: 2,
+        y: 2
     }
 })
 
 // Function For Initialize The Main Loop
 function mainLoop():void {
     game_ctx.clearRect(0, 0, game.width, game.height) // Clears The Game CTX
-    game_ctx.fillStyle = "black"
+    
+    if(keys.w) doomguy.moveUp() // Moves The Doomguy Upwards
+    if(keys.a) doomguy.moveLeft() // Moves The Doomguy To The Left
+    if(keys.s) doomguy.moveDown() // Moves The Doomguy Downwards
+    if(keys.d) doomguy.moveRight() // Moves The Doomguy To The Right
+    if(keys.space) doomguy.shoot() // Doomguy Shoots
 
+    doomguy.is_moving = false // Stores The Information That The Doomguy Isn't Moving
+    doomguy.update() // Updates The Doomguy's Frames
     doomguy.draw(game_ctx) // Draws The Doomguy
+
+    imp.draw(game_ctx) // Draws The Imp
 
     requestAnimationFrame(mainLoop) // Loops The Main Loop
 }
@@ -42,52 +87,25 @@ window.addEventListener("resize", function():void {
 // Global Event Delegations
 
 // Window Keydown Functionalities
-window.addEventListener("keydown", function(event:KeyboardEvent):void {
-    const key:number = event.keyCode // Gets The Clicked Key
+window.addEventListener("keydown", function(event):void {
+    const key:string = event.key // Gets The Clicked Key
 
-    switch(key) {
-        // Move Up
-        case 87:
-            doomguy.moveUp() // Moves The Doomguy Upwards
-            break
+    // Stores The Pressed Keys
+    if(key === "w" || key === "ArrowUp") keys.w = true
+    if(key === "a" || key === "ArrowLeft") keys.a = true
+    if(key === "s" || key === "ArrowDown") keys.s = true
+    if(key === "d" || key === "ArrowRight") keys.d = true
+    if(key === " ") keys.space = true
+})
 
-        // Move Up
-        case 38:
-            doomguy.moveUp() // Moves The Doomguy Upwards
-            break
+// Window Keyup Functionalities
+window.addEventListener("keyup", function(event):void {
+    const key:string = event.key // Gets The Clicked Key
 
-        // Move Left
-        case 65:
-            doomguy.moveLeft() // Moves The Doomguy To The Left
-            break
-
-        // Move Left
-        case 37:
-            doomguy.moveLeft() // Moves The Doomguy To The Left
-            break
-
-        // Move Down
-        case 83:
-            doomguy.moveDown() // Moves The Doomguy Downwards
-            break
-
-        // Move Down
-        case 40:
-            doomguy.moveDown() // Moves The Doomguy Downwards
-            break
-
-        // Move Right
-        case 68:
-            doomguy.moveRight() // Moves The Doomguy To The Right
-            break
-
-        // Move Right
-        case 39:
-            doomguy.moveRight() // Moves The Doomguy To The Right
-            break
-
-        case 32:
-            doomguy.shoot() // Doomguy Shoots
-            break
-    }
+    // Stores The Released Keys
+    if(key === "w" || key === "ArrowUp") keys.w = false
+    if(key === "a" || key === "ArrowLeft") keys.a = false
+    if(key === "s" || key === "ArrowDown") keys.s = false
+    if(key === "d" || key === "ArrowRight") keys.d = false
+    if(key === " ") keys.space = false
 })

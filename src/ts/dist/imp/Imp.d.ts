@@ -9,12 +9,10 @@ type Velocity = {
 type Config = {
     position: Position;
     velocity: Velocity;
-    is_moving: boolean;
 };
-export declare class Doomguy {
+export declare class Imp {
     position: Position;
     velocity: Velocity;
-    is_moving?: boolean;
     private scale;
     private image;
     private size;
@@ -22,13 +20,10 @@ export declare class Doomguy {
     private max_frames;
     private is_mirrored;
     private frames_counter;
-    private current_action;
     private last_used_sprite;
-    private is_shooting;
-    private shoot_loops;
-    constructor({ position, velocity, is_moving }: Config);
+    constructor({ position, velocity }: Config);
     draw(ctx: CanvasRenderingContext2D): void;
-    update(): void;
+    changeImage(image_set: string): void;
     moveUp(): void;
     moveLeft(): void;
     moveDown(): void;
@@ -36,4 +31,4 @@ export declare class Doomguy {
     shoot(): void;
 }
 export {};
-//# sourceMappingURL=Doomguy.d.ts.map
+//# sourceMappingURL=Imp.d.ts.map

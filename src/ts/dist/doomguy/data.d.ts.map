@@ -1,1 +1,1 @@
-{"version":3,"file":"data.d.ts","sourceRoot":"","sources":["../../src/doomguy/data.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,OAAO;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;CA8GnB,CAAA;AAED,eAAO,MAAM,GAAG;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;CA+Gf,CAAA"}
+{"version":3,"file":"data.d.ts","sourceRoot":"","sources":["../../src/doomguy/data.ts"],"names":[],"mappings":"AAAA,eAAO,MAAM,OAAO;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;CA8GnB,CAAA;AAED,eAAO,MAAM,UAAU;;;;;;;;;CAqBtB,CAAA"}

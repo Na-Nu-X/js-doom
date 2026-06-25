@@ -2,16 +2,22 @@ import { doomguy as doomguy_sprites } from "./data.js";
 export class Doomguy {
     position;
     velocity;
+    is_moving;
     scale;
     image;
     size;
     current_frame;
     max_frames;
     is_mirrored;
-    frame_counter;
-    constructor({ position, velocity }) {
+    frames_counter;
+    current_action;
+    last_used_sprite;
+    is_shooting;
+    shoot_loops;
+    constructor({ position, velocity, is_moving }) {
         this.position = position;
         this.velocity = velocity;
+        this.is_moving = false; // Checks If The Doomguy Is Moving
         this.scale = 2;
         this.image = new Image();
         this.image.src = "../../textures/doomguy/PLAYA1.png";
@@ -22,7 +28,11 @@ export class Doomguy {
         this.current_frame = 0; // Sets The Initial Current Sprite Frame
         this.max_frames = doomguy_sprites.move_down.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
         this.is_mirrored = false; // Sets The Default Information If The Sprite Is Mirrored
-        this.frame_counter = 0; // Sets The Initial Frame Counter Value
+        this.frames_counter = 0; // Sets The Initial Frames Counter Value
+        this.current_action = "move_down"; // Stores The Current Used Sprite
+        this.last_used_sprite = ""; // Stores The Last Used Sprite
+        this.is_shooting = false; // Checks If The Doomguy Is Shooting
+        this.shoot_loops = 0; // Stores The Amount Of Current Shooting Animation's Repetitions
     }
     // Method For Draw The Doomguy
     draw(ctx) {
@@ -42,72 +52,88 @@ export class Doomguy {
         else {
             ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
         }
-        // Shows The Hitbox
-        // ctx.strokeStyle = "red"
-        // ctx.strokeRect(
-        //     this.position.x - (this.size.width / 2),
-        //     this.position.y - (this.size.height / 2),
-        //     this.size.width,
-        //     this.size.height
-        // )
     }
-    // Method For Change The Image
-    changeImage(image_set) {
-        const MAIN_PATH = "../../textures/doomguy/"; // Defines The Main Path
-        switch (image_set) {
-            case "move_up":
-                this.max_frames = doomguy_sprites.move_up.frames.length; // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_sprites.move_up.frames[this.current_frame]}.png`; // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_sprites.move_up.mirrored; // Stores The Information If The Current Sprite Is Mirrored
-                break;
-            case "move_left":
-                this.max_frames = doomguy_sprites.move_left.frames.length; // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_sprites.move_left.frames[this.current_frame]}.png`; // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_sprites.move_left.mirrored; // Stores The Information If The Current Sprite Is Mirrored
-                break;
-            case "move_down":
-                this.max_frames = doomguy_sprites.move_down.frames.length; // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_sprites.move_down.frames[this.current_frame]}.png`; // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_sprites.move_down.mirrored; // Stores The Information If The Current Sprite Is Mirrored
-                break;
-            case "move_right":
-                this.max_frames = doomguy_sprites.move_right.frames.length; // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + doomguy_sprites.move_right.frames[this.current_frame]}.png`; // Replaces The Image With A Current Frame
-                this.is_mirrored = doomguy_sprites.move_right.mirrored; // Stores The Information If The Current Sprite Is Mirrored
-                break;
+    update() {
+        const MAIN_PATH = "../../textures/doomguy/";
+        // Načítame dáta pre aktuálne nastavenú akciu
+        const sprite_data = doomguy_sprites[this.current_action];
+        this.max_frames = sprite_data.frames.length;
+        this.is_mirrored = sprite_data.mirrored;
+        // 🔥 OPRAVA: src prepíšeme IBA vtedy, ak sa reálne zmenil reťazec (cesta k obrázku)
+        const next_src = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`;
+        if (this.image.src !== next_src) {
+            this.image.src = next_src;
         }
-        if (this.current_frame < this.max_frames - 1) {
-            if (this.frame_counter % 4 === 0)
-                this.current_frame += 1; // Increases The Current Sprite Frame
+        // Animáciu posúvame, ak sa strieľa, alebo ak sa postava hýbe
+        if (this.is_shooting || this.is_moving) {
+            if (this.frames_counter % 30 === 0) {
+                this.current_frame += 1;
+                if (this.current_frame >= this.max_frames) {
+                    if (this.is_shooting) {
+                        this.shoot_loops += 1;
+                        const REPEAT_TIMES = 3;
+                        if (this.shoot_loops >= REPEAT_TIMES) {
+                            this.is_shooting = false;
+                            // Po skončení streľby vrátime akciu automaticky na chôdzu
+                            this.current_action = this.current_action.replace("shoot", "move");
+                            this.current_frame = 0;
+                        }
+                        else {
+                            this.current_frame = 0; // Opakovanie streľby od znova
+                        }
+                    }
+                    else {
+                        this.current_frame = 0; // Zacyklenie chôdze
+                    }
+                }
+            }
+            this.frames_counter += 1;
         }
         else {
-            this.current_frame = 0; // Resets The Current Sprite Frame
+            // Ak postava stojí a nestrieľa, vynútime nultý (stojaci) frame chôdze
+            this.current_frame = 0;
+            this.frames_counter = 0;
         }
-        this.frame_counter += 1; // Increases The Frame Counter
     }
     // Method For Move Up The Doomguy
     moveUp() {
         this.position.y -= this.velocity.x;
-        this.changeImage("move_up");
+        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+        if (!this.is_shooting)
+            this.current_action = "move_up";
     }
     // Method For Move Left The Doomguy
     moveLeft() {
         this.position.x -= this.velocity.x;
-        this.changeImage("move_left");
+        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+        if (!this.is_shooting)
+            this.current_action = "move_left";
     }
     // Method For Move Down The Doomguy
     moveDown() {
         this.position.y += this.velocity.x;
-        this.changeImage("move_down");
+        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+        if (!this.is_shooting)
+            this.current_action = "move_down";
     }
     // Method For Move Right The Doomguy
     moveRight() {
         this.position.x += this.velocity.x;
-        this.changeImage("move_right");
+        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+        if (!this.is_shooting)
+            this.current_action = "move_right";
     }
     // Method For Shooting
     shoot() {
-        console.log("SHOOT");
+        if (!this.is_shooting) {
+            this.is_shooting = true;
+            this.shoot_loops = 0;
+            this.current_frame = 0;
+            this.frames_counter = 0;
+            if (this.current_action.startsWith("move")) {
+                this.current_action = this.current_action.replace("move", "shoot");
+            }
+        }
     }
 }
 //# sourceMappingURL=Doomguy.js.map

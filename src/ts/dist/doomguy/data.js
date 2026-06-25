@@ -90,97 +90,23 @@ export const doomguy = {
         mirrored: false
     },
 };
-export const imp = {
-    "move_up": {
+export const shot_decal = {
+    "wall_hit": {
         frames: [
-            "TROOA5",
-            "TROOB5",
-            "TROOC5",
-            "TROOD5"
+            "PUFFA0",
+            "PUFFB0",
+            "PUFFC0",
+            "PUFFD0"
         ],
         mirrored: false
     },
-    "move_left": {
+    "enemy_hit": {
         frames: [
-            "TROOA3A7",
-            "TROOB3B7",
-            "TROOC3C7",
-            "TROOD3D7"
+            "BLUDA0",
+            "BLUDB0",
+            "BLUDC0"
         ],
         mirrored: false
-    },
-    "move_down": {
-        frames: [
-            "TROOA1",
-            "TROOB1",
-            "TROOC1",
-            "TROOD1"
-        ],
-        mirrored: false
-    },
-    "move_right": {
-        frames: [
-            "TROOA3A7",
-            "TROOB3B7",
-            "TROOC3C7",
-            "TROOD3D7"
-        ],
-        mirrored: true
-    },
-    "shoot_up": {
-        frames: [
-            "TROOE5",
-            "TROOF5",
-            "TROOG5"
-        ],
-        mirrored: false
-    },
-    "shoot_left": {
-        frames: [
-            "TROOE3E7",
-            "TROOF3F7",
-            "TROOG3G7"
-        ],
-        mirrored: false
-    },
-    "shoot_down": {
-        frames: [
-            "TROOE1",
-            "TROOF1",
-            "TROOG1"
-        ],
-        mirrored: false
-    },
-    "shoot_right": {
-        frames: [
-            "TROOE3E7",
-            "TROOF3F7",
-            "TROOG3G7"
-        ],
-        mirrored: true
-    },
-    "death": {
-        frames: [
-            "TROOI0",
-            "TROOJ0",
-            "TROOK0",
-            "TROOL0",
-            "TROOM0"
-        ],
-        mirrored: false
-    },
-    "explode_death": {
-        frames: [
-            "TROON0",
-            "TROOO0",
-            "TROOP0",
-            "TROOQ0",
-            "TROOR0",
-            "TROOS0",
-            "TROOT0",
-            "TROOU0"
-        ],
-        mirrored: false
-    },
+    }
 };
 //# sourceMappingURL=data.js.map
