@@ -39,8 +39,25 @@ const imp = new Imp({
     velocity: {
         x: 2,
         y: 2
-    }
+    },
+    animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+    is_moving: false // Stores The Information That The Doomguy Isn't Moving
 });
+// Function For Check The Collision Between Two Rectangles
+function checkCollision(rectangle_1, rectangle_2) {
+    const rectangle_1_left = rectangle_1.position.x - (rectangle_1.size.width / 2);
+    const rectangle_1_right = rectangle_1.position.x + (rectangle_1.size.width / 2);
+    const rectangle_1_top = rectangle_1.position.y - (rectangle_1.size.height / 2);
+    const rectangle_1_bottom = rectangle_1.position.y + (rectangle_1.size.height / 2);
+    const rectangle_2_left = rectangle_2.position.x - (rectangle_2.size.width / 2);
+    const rectangle_2_right = rectangle_2.position.x + (rectangle_2.size.width / 2);
+    const rectangle_2_top = rectangle_2.position.y - (rectangle_2.size.height / 2);
+    const rectangle_2_bottom = rectangle_2.position.y + (rectangle_2.size.height / 2);
+    return (rectangle_1_left < rectangle_2_right &&
+        rectangle_1_right > rectangle_2_left &&
+        rectangle_1_top < rectangle_2_bottom &&
+        rectangle_1_bottom > rectangle_2_top);
+}
 // Fubction For Get The Bullet Position
 function getBulletPosition(current_action, position_of_shooter) {
     const position = {
@@ -55,30 +72,31 @@ function getBulletPosition(current_action, position_of_shooter) {
     // Left Spawn Position
     if (current_action === "shoot_left") {
         position.x = position_of_shooter.x - doomguy.size.width / 2,
-            position.y = position_of_shooter.y;
+            position.y = position_of_shooter.y - 12;
     }
     // Down Spawn Position
     if (current_action === "shoot_down") {
-        position.x = position_of_shooter.x,
-            position.y = position_of_shooter.y;
+        position.x = position_of_shooter.x - 18,
+            position.y = position_of_shooter.y - 12;
     }
     // Right Spawn Position
     if (current_action === "shoot_right") {
         position.x = position_of_shooter.x + doomguy.size.width / 2,
-            position.y = position_of_shooter.y;
+            position.y = position_of_shooter.y - 12;
     }
     return position;
 }
 // Function For Initialize The Main Loop
 function mainLoop() {
     game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
+    doomguy.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
     if (keys.w)
         doomguy.moveUp(); // Moves The Doomguy Upwards
-    if (keys.a)
+    else if (keys.a)
         doomguy.moveLeft(); // Moves The Doomguy To The Left
-    if (keys.s)
+    else if (keys.s)
         doomguy.moveDown(); // Moves The Doomguy Downwards
-    if (keys.d)
+    else if (keys.d)
         doomguy.moveRight(); // Moves The Doomguy To The Right
     // Doomguy Shoot Functionality
     if (keys.space && !doomguy.is_shooting) {
@@ -87,19 +105,34 @@ function mainLoop() {
         // Creates The Bullet
         const bullet = new Bullet({
             position: bullet_position, // Sets The Spawn Position
-            direction: doomguy.current_action // Sets The Fly Direction
+            direction: doomguy.current_action, // Sets The Fly Direction
+            animation_slowdown_level: 30 // Sets The Timeout Between Sprite Animations (Every 30th Frame)
         });
         all_bullets.push(bullet); // Stores The New Bullet To All Bullets
     }
-    doomguy.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
     doomguy.update(); // Updates The Doomguy's Frames
     doomguy.draw(game_ctx); // Draws The Doomguy
+    imp.update(); // Updates The Imp's Frames
     imp.draw(game_ctx); // Draws The Imp
     // Renders Every Bullet
     for (let i = all_bullets.length - 1; i >= 0; i--) {
         const one_bullet = all_bullets[i]; // Gets The Bullet
         one_bullet.update(); // Updates The Bullet
         one_bullet.draw(game_ctx); // Draws The Bullet
+        // If The Bullet Hit The Imp
+        if (checkCollision(one_bullet, imp)) {
+            imp.gotHit(); // Imp Obtain The Hit
+            one_bullet.makeDecal(); // Makes The Decal
+            // all_bullets.splice(i, 1) // Removes The Bullet From The All Bullets
+            continue;
+        }
+        // If The Bullet Hit The Map Border
+        if (one_bullet.position.x <= 0 ||
+            one_bullet.position.x >= window.innerWidth ||
+            one_bullet.position.y <= 0 ||
+            one_bullet.position.y >= window.innerHeight) {
+            all_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
+        }
     }
     requestAnimationFrame(mainLoop); // Loops The Main Loop
 }
@@ -117,13 +150,13 @@ window.addEventListener("keydown", function (event) {
     // Stores The Pressed Keys
     if (key === "w" || key === "ArrowUp")
         keys.w = true;
-    if (key === "a" || key === "ArrowLeft")
+    else if (key === "a" || key === "ArrowLeft")
         keys.a = true;
-    if (key === "s" || key === "ArrowDown")
+    else if (key === "s" || key === "ArrowDown")
         keys.s = true;
-    if (key === "d" || key === "ArrowRight")
+    else if (key === "d" || key === "ArrowRight")
         keys.d = true;
-    if (key === " ")
+    else if (key === " ")
         keys.space = true;
 });
 // Window Keyup Functionalities
@@ -132,13 +165,13 @@ window.addEventListener("keyup", function (event) {
     // Stores The Released Keys
     if (key === "w" || key === "ArrowUp")
         keys.w = false;
-    if (key === "a" || key === "ArrowLeft")
+    else if (key === "a" || key === "ArrowLeft")
         keys.a = false;
-    if (key === "s" || key === "ArrowDown")
+    else if (key === "s" || key === "ArrowDown")
         keys.s = false;
-    if (key === "d" || key === "ArrowRight")
+    else if (key === "d" || key === "ArrowRight")
         keys.d = false;
-    if (key === " ")
+    else if (key === " ")
         keys.space = false;
 });
 //# sourceMappingURL=game.js.map

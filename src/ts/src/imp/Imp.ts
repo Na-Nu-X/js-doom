@@ -1,45 +1,51 @@
 import { imp as imp_sprites } from "./data.js"
 
-type Position = {
-    x:number,
-    y:number
-}
+import type { 
+    Position, 
+    Size, 
+    Velocity 
+} from "../doomguy/Doomguy.js"
 
-type Size = {
-    width:number,
-    height:number
-}
-
-type Velocity = {
-    x:number,
-    y:number
-}
-
-type Config = {
+interface ImpConfig {
     position:Position,
-    velocity:Velocity
+    velocity:Velocity,
+    animation_slowdown_level:number,
+    is_moving:boolean,
+}
+
+interface FireballConfig {
+    position:Position,
+    velocity?:Velocity,
+    size?:Size,
+    direction:string
 }
 
 export class Imp {
     position:Position
     velocity:Velocity
+    animation_slowdown_level:number
+    is_moving:boolean
+    size:Size
+    is_shooting:boolean
+    current_action:string
 
     private scale:number
     private image:HTMLImageElement
-    private size:Size
     private current_frame:number
     private max_frames:number
     private is_mirrored:boolean
     private frames_counter:number
-    private last_used_sprite:string
-    // private is_shooting:boolean
+    private shoot_loops:number
 
     constructor({
         position,
-        velocity
-    }:Config) {
+        velocity,
+        animation_slowdown_level
+    }:ImpConfig) {
         this.position = position
         this.velocity = velocity
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+        this.is_moving = false // Stores The Information If The Imp Is Moving
 
         this.scale = 2
 
@@ -56,9 +62,10 @@ export class Imp {
         this.is_mirrored = false // Sets The Default Information If The Sprite Is Mirrored
         this.frames_counter = 0 // Sets The Initial Frames Counter Value
 
-        this.last_used_sprite = "" // Stores The Last Used Sprite
+        this.current_action = "move_down" // Stores The Current Used Sprite
 
-        // this.is_shooting = false // Checks If The Imp Is Shooting
+        this.is_shooting = false // Checks If The Imp Is Shooting
+        this.shoot_loops = 0 // Stores The Amount Of Current Shooting Animation's Repetitions
     }
     
     // Method For Draw The Imp
@@ -109,114 +116,151 @@ export class Imp {
         )
     }
 
-    // Method For Change The Image
-    changeImage(image_set:string):void {
-        const MAIN_PATH:string = "../../textures/imp/" // Defines The Main Path
+    // Method For Update The Imp
+    update():void {
+        const MAIN_PATH:string = "../../textures/imp/" // Defines The Main Sprite Path
+        const sprite_data = imp_sprites[this.current_action as keyof typeof imp_sprites] // Loads Sprites For The Current Action
+        const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
 
-        if(this.last_used_sprite !== image_set) {
-            this.current_frame = 0 // Resets The Current Sprite Frame
-            this.frames_counter = 0 // Resets The Frame Counter
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+        this.is_mirrored = sprite_data.mirrored // Updates The Information If The Sprite Is Mirrored
+
+        if(this.image.src !== next_source) this.image.src = next_source // Updates The Image Source Only If Differs
+
+        // If The Imp Is Moving Or Shooting
+        if(this.is_moving || this.is_shooting) {
+            // Changes The Sprite Frame Only In Every Selected Period
+            if(this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1 // Increases The Current Sprite Frame
+
+                // When The Sprite Animation Has Finished
+                if(this.current_frame >= this.max_frames) {
+                    // Handles The Shooting Animation Loop
+                    if(this.is_shooting) {
+                        const REPEAT_TIMES:number = 3 // Sets The Amount Of Shooting Animation's Repetitions
+
+                        this.shoot_loops += 1 // Increases The Amount Of Current Shooting Animation's Repetitions
+
+                        // Ends The Shooting Animation When The Shooting Animation Reached The Maximum Amount Of Loops
+                        if(this.shoot_loops >= REPEAT_TIMES) {
+                            this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
+                            this.current_action = this.current_action.replace("shoot", "move") // Replaces The Shoot Action With The Move Action
+                            this.current_frame = 0 // Resets The Current Sprite Frame Value
+                        }
+                        
+                        else this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    } 
+                    
+                    else this.current_frame = 0 // Resets The Current Sprite Frame Value
+                }
+            }
+
+            this.frames_counter += 1 // Increases The Frames Counter Value
         }
-
-        this.last_used_sprite = image_set // Sets The Last Used Sprite
-
-        switch(image_set) {
-            case "move_up":
-                this.max_frames = imp_sprites.move_up.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.move_up.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.move_up.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "move_left":
-                this.max_frames = imp_sprites.move_left.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.move_left.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.move_left.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "move_down":
-                this.max_frames = imp_sprites.move_down.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.move_down.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.move_down.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "move_right":
-                this.max_frames = imp_sprites.move_right.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.move_right.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.move_right.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "shoot_up":
-                this.max_frames = imp_sprites.shoot_up.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.shoot_up.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.shoot_up.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "shoot_left":
-                console.log(this.current_frame)
-                this.max_frames = imp_sprites.shoot_left.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.shoot_left.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.shoot_left.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "shoot_down":
-                this.max_frames = imp_sprites.shoot_down.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.shoot_down.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.shoot_down.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-
-            case "shoot_right":
-                this.max_frames = imp_sprites.shoot_right.frames.length // Sets The Amount Of Maximum Sprite Frames
-                this.image.src = `${MAIN_PATH + imp_sprites.shoot_right.frames[this.current_frame]}.png` // Replaces The Image With A Current Frame
-                this.is_mirrored = imp_sprites.shoot_right.mirrored // Stores The Information If The Current Sprite Is Mirrored
-                break
-        }
-
-        if(this.current_frame < this.max_frames - 1) {
-            if(this.frames_counter % 4 === 0) this.current_frame += 1 // Increases The Current Sprite Frame
-        }
-
+        
+        // If The Imp Is Standing
         else {
-            this.current_frame = 0 // Resets The Current Sprite Frame
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
         }
-
-        this.frames_counter += 1 // Increases The Frames Counter
     }
 
     // Method For Move Up The Imp
     moveUp():void {
-        // this.is_shooting = false // Stores The Information About Imp Isn't Shooting
-        this.position.y -= this.velocity.x
-        this.changeImage("move_up")
+        this.position.y -= this.velocity.x // Moves Up
+        this.is_moving = true // Stores The Information That The Imp Is Moving
+        if(!this.is_shooting) this.current_action = "move_up" // Sets The Current Action
     }
 
     // Method For Move Left The Imp
     moveLeft():void {
-        // this.is_shooting = false // Stores The Information About Imp Isn't Shooting
-        this.position.x -= this.velocity.x
-        this.changeImage("move_left")
+        this.position.x -= this.velocity.x // Moves To The Left
+        this.is_moving = true // Stores The Information That The Imp Is Moving
+        if(!this.is_shooting) this.current_action = "move_left" // Sets The Current Action
     }
 
     // Method For Move Down The Imp
     moveDown():void {
-        // this.is_shooting = false // Stores The Information About Imp Isn't Shooting
-        this.position.y += this.velocity.x
-        this.changeImage("move_down")
+        this.position.y += this.velocity.x // Moves Down
+        this.is_moving = true // Stores The Information That The Imp Is Moving
+        if(!this.is_shooting) this.current_action = "move_down" // Sets The Current Action
     }
 
     // Method For Move Right The Imp
     moveRight():void {
-        // this.is_shooting = false // Stores The Information About Imp Isn't Shooting
-        this.position.x += this.velocity.x
-        this.changeImage("move_right")
+        this.position.x += this.velocity.x // Moves To The Right
+        this.is_moving = true // Stores The Information That The Imp Is Moving
+        if(!this.is_shooting) this.current_action = "move_right" // Sets The Current Action
     }
 
     // Method For Shooting
     shoot():void {
-        // this.is_shooting = true // Stores The Information About Imp's Shooting
+        // If The Imp Isn't Shooting
+        if(!this.is_shooting) {
+            this.is_shooting = true // Stores The Information That The Imp Is Shooting
+            this.shoot_loops = 0 // Resets The Amount Of Current Shooting Animation's Repetitions
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
 
-        if(this.last_used_sprite === "move_up" || this.last_used_sprite === "shoot_up") this.changeImage("shoot_up")
-        if(this.last_used_sprite === "move_left" || this.last_used_sprite === "shoot_left") this.changeImage("shoot_left")
-        if(this.last_used_sprite === "move_down" || this.last_used_sprite === "shoot_down") this.changeImage("shoot_down")
-        if(this.last_used_sprite === "move_right" || this.last_used_sprite === "shoot_right") this.changeImage("shoot_right")
+            if(this.current_action.startsWith("move")) this.current_action = this.current_action.replace("move", "shoot") // Replaces The Move Action With The Shoot Action
+        }
+    }
+
+    // Method For Obtain The Hit
+    gotHit():void {
+        // console.log("HIT")
+        // this.is_moving = false // Stores The Information That The Imp Isn't Moving
+        // this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
+        // this.current_action = "bleed"
+    }
+}
+
+export class Fireball {
+    position:Position
+    velocity:Velocity
+    size:Size
+    direction:string
+
+    constructor({
+        position,
+        velocity,
+        size,
+        direction
+    }:FireballConfig) {
+        this.position = position
+
+        // Sets The Movement Speed
+        this.velocity = { 
+            x: 10,
+            y: 10
+        },
+
+        // Sets The Size
+        this.size = {
+            width: 10,
+            height: 10
+        }
+
+        this.direction = direction
+    }
+
+    // Method For Draw The Fireball
+    draw(ctx:CanvasRenderingContext2D):void {
+        ctx.fillStyle = "red"
+
+        ctx.fillRect(
+            this.position.x - this.size.width / 2,
+            this.position.y - this.size.height / 2,
+            this.size.width,
+            this.size.height
+        )
+    }
+
+    // Method For Update The Fireball
+    update():void {
+        if(this.direction === "shoot_up") this.position.y -= this.velocity.y
+        if(this.direction === "shoot_left") this.position.x -= this.velocity.x
+        if(this.direction === "shoot_down") this.position.y += this.velocity.y
+        if(this.direction === "shoot_right") this.position.x += this.velocity.x
     }
 }

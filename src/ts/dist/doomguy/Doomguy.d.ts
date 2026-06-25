@@ -2,11 +2,11 @@ export interface Position {
     x: number;
     y: number;
 }
-interface Size {
+export interface Size {
     width: number;
     height: number;
 }
-interface Velocity {
+export interface Velocity {
     x: number;
     y: number;
 }
@@ -19,6 +19,7 @@ interface DoomguyConfig {
 interface BulletConfig {
     position: Position;
     velocity?: Velocity;
+    animation_slowdown_level: number;
     size?: Size;
     direction: string;
 }
@@ -49,11 +50,19 @@ export declare class Doomguy {
 export declare class Bullet {
     position: Position;
     velocity: Velocity;
+    animation_slowdown_level: number;
     size: Size;
     direction: string;
-    constructor({ position, velocity, size, direction }: BulletConfig);
+    private image;
+    private current_frame;
+    private max_frames;
+    private frames_counter;
+    private is_colliding;
+    private current_action;
+    constructor({ position, animation_slowdown_level, direction }: BulletConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
+    makeDecal(): void;
 }
 export {};
 //# sourceMappingURL=Doomguy.d.ts.map

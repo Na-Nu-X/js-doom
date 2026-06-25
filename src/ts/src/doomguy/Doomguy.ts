@@ -1,16 +1,17 @@
 import { doomguy as doomguy_sprites } from "./data.js"
+import { shot_decal as shot_decal_sprites } from "./data.js"
 
 export interface Position {
     x:number,
     y:number
 }
 
-interface Size {
+export interface Size {
     width:number,
     height:number
 }
 
-interface Velocity {
+export interface Velocity {
     x:number,
     y:number
 }
@@ -25,6 +26,7 @@ interface DoomguyConfig {
 interface BulletConfig {
     position:Position,
     velocity?:Velocity,
+    animation_slowdown_level:number,
     size?:Size,
     direction:string
 }
@@ -219,13 +221,20 @@ export class Doomguy {
 export class Bullet {
     position:Position
     velocity:Velocity
+    animation_slowdown_level:number
     size:Size
     direction:string
 
+    private image:HTMLImageElement
+    private current_frame:number
+    private max_frames:number
+    private frames_counter:number
+    private is_colliding:boolean
+    private current_action:string
+
     constructor({
         position,
-        velocity,
-        size,
+        animation_slowdown_level,
         direction
     }:BulletConfig) {
         this.position = position
@@ -236,6 +245,8 @@ export class Bullet {
             y: 10
         },
 
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+
         // Sets The Size
         this.size = {
             width: 10,
@@ -243,25 +254,73 @@ export class Bullet {
         }
 
         this.direction = direction
+        this.image = new Image()
+        this.image.src = "../../textures/shot_decal/BLUDA0.png"
+        this.current_frame = 0 // Sets The Initial Current Sprite Frame
+        this.max_frames = doomguy_sprites.move_down.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.frames_counter = 0 // Sets The Initial Frames Counter Value
+        this.is_colliding = false // Stores The Information If The Bullet Is Colliding
+        this.current_action = "enemy_hit" // Stores The Current Used Sprite
     }
 
     // Method For Draw The Bullet
     draw(ctx:CanvasRenderingContext2D):void {
-        ctx.fillStyle = "yellow"
+        if(!this.is_colliding) {
+            ctx.fillStyle = "red"
 
-        ctx.fillRect(
-            this.position.x - this.size.width / 2,
-            this.position.y - this.size.height / 2,
-            this.size.width,
-            this.size.height
-        )
+            ctx.fillRect(
+                this.position.x - this.size.width / 2,
+                this.position.y - this.size.height / 2,
+                this.size.width,
+                this.size.height
+            )
+        }
+
+        else {
+            ctx.drawImage(
+                this.image,
+                this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+        }
     }
 
     // Method For Update The Bullet
     update():void {
-        if(this.direction === "move_up") this.position.y -= this.velocity.y
-        if(this.direction === "move_left") this.position.x -= this.velocity.x
-        if(this.direction === "move_down") this.position.y += this.velocity.y
-        if(this.direction === "move_right") this.position.x += this.velocity.x
+        const MAIN_PATH:string = "../../textures/shot_decal/" // Defines The Main Sprite Path
+        const sprite_data = shot_decal_sprites[this.current_action as keyof typeof shot_decal_sprites] // Loads Sprites For The Current Action
+        const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
+
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+
+        if(this.image.src !== next_source) this.image.src = next_source // Updates The Image Source Only If Differs
+
+        // Moves The Bullet
+        if(!this.is_colliding) {
+            if(this.direction === "shoot_up") this.position.y -= this.velocity.y
+            if(this.direction === "shoot_left") this.position.x -= this.velocity.x
+            if(this.direction === "shoot_down") this.position.y += this.velocity.y
+            if(this.direction === "shoot_right") this.position.x += this.velocity.x
+        }
+
+        // Shows The Enemy Hit Animation
+        else {
+            // Changes The Sprite Frame Only In Every Selected Period
+            if(this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1 // Increases The Current Sprite Frame
+
+                // When The Sprite Animation Has Finished
+                if(this.current_frame >= this.max_frames) {
+                    this.current_frame = 0 // Resets The Current Sprite Frame Value
+                }
+            }
+        }
+    }
+
+    // Method For Make The Bullet Decal
+    makeDecal():void {
+        this.is_colliding = true
     }
 }

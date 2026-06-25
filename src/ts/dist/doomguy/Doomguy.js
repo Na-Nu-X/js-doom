@@ -1,4 +1,5 @@
 import { doomguy as doomguy_sprites } from "./data.js";
+import { shot_decal as shot_decal_sprites } from "./data.js";
 export class Doomguy {
     position;
     velocity;
@@ -141,37 +142,81 @@ export class Doomguy {
 export class Bullet {
     position;
     velocity;
+    animation_slowdown_level;
     size;
     direction;
-    constructor({ position, velocity, size, direction }) {
+    image;
+    current_frame;
+    max_frames;
+    frames_counter;
+    is_colliding;
+    current_action;
+    constructor({ position, animation_slowdown_level, direction }) {
         this.position = position;
         // Sets The Movement Speed
         this.velocity = {
             x: 10,
             y: 10
         },
-            // Sets The Size
-            this.size = {
-                width: 10,
-                height: 10
-            };
+            this.animation_slowdown_level = animation_slowdown_level; // Sets The Level Of Animation Slowdown
+        // Sets The Size
+        this.size = {
+            width: 10,
+            height: 10
+        };
         this.direction = direction;
+        this.image = new Image();
+        this.image.src = "../../textures/shot_decal/BLUDA0.png";
+        this.current_frame = 0; // Sets The Initial Current Sprite Frame
+        this.max_frames = doomguy_sprites.move_down.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
+        this.frames_counter = 0; // Sets The Initial Frames Counter Value
+        this.is_colliding = false; // Stores The Information If The Bullet Is Colliding
+        this.current_action = "enemy_hit"; // Stores The Current Used Sprite
     }
     // Method For Draw The Bullet
     draw(ctx) {
-        ctx.fillStyle = "yellow";
-        ctx.fillRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
+        if (!this.is_colliding) {
+            ctx.fillStyle = "red";
+            ctx.fillRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
+        }
+        else {
+            ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
+        }
     }
     // Method For Update The Bullet
     update() {
-        if (this.direction === "move_up")
-            this.position.y -= this.velocity.y;
-        if (this.direction === "move_left")
-            this.position.x -= this.velocity.x;
-        if (this.direction === "move_down")
-            this.position.y += this.velocity.y;
-        if (this.direction === "move_right")
-            this.position.x += this.velocity.x;
+        const MAIN_PATH = "../../textures/shot_decal/"; // Defines The Main Sprite Path
+        const sprite_data = shot_decal_sprites[this.current_action]; // Loads Sprites For The Current Action
+        const next_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source
+        this.max_frames = sprite_data.frames.length; // Updates The Amount Of Maximum Sprite Frames
+        if (this.image.src !== next_source)
+            this.image.src = next_source; // Updates The Image Source Only If Differs
+        // Moves The Bullet
+        if (!this.is_colliding) {
+            if (this.direction === "shoot_up")
+                this.position.y -= this.velocity.y;
+            if (this.direction === "shoot_left")
+                this.position.x -= this.velocity.x;
+            if (this.direction === "shoot_down")
+                this.position.y += this.velocity.y;
+            if (this.direction === "shoot_right")
+                this.position.x += this.velocity.x;
+        }
+        // Shows The Enemy Hit Animation
+        else {
+            // Changes The Sprite Frame Only In Every Selected Period
+            if (this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1; // Increases The Current Sprite Frame
+                // When The Sprite Animation Has Finished
+                if (this.current_frame >= this.max_frames) {
+                    this.current_frame = 0; // Resets The Current Sprite Frame Value
+                }
+            }
+        }
+    }
+    // Method For Make The Bullet Decal
+    makeDecal() {
+        this.is_colliding = true;
     }
 }
 //# sourceMappingURL=Doomguy.js.map
