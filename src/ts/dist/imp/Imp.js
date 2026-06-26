@@ -57,7 +57,7 @@ export class Imp {
             ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
         }
         // Shows The Hitbox
-        ctx.strokeStyle = "red";
+        ctx.strokeStyle = "yellow";
         ctx.strokeRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
         // Health Bar
         if (!this.is_death) {
