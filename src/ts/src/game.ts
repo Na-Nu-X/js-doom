@@ -124,12 +124,15 @@ function getBulletPosition(current_action:string, position_of_shooter:Position):
 function mainLoop():void {
     game_ctx.clearRect(0, 0, game.width, game.height) // Clears The Game CTX
 
+    imp.update() // Updates The Imp's Frames
+    imp.draw(game_ctx) // Draws The Imp
+
     doomguy.is_moving = false // Stores The Information That The Doomguy Isn't Moving
     
-    if(keys.w) doomguy.moveUp() // Moves The Doomguy Upwards
-    else if(keys.a) doomguy.moveLeft() // Moves The Doomguy To The Left
-    else if(keys.s) doomguy.moveDown() // Moves The Doomguy Downwards
-    else if(keys.d) doomguy.moveRight() // Moves The Doomguy To The Right
+    if(keys.w && doomguy.position.y > 0 + doomguy.size.height / 2) doomguy.moveUp() // Moves The Doomguy Upwards
+    else if(keys.a && doomguy.position.x > 0 + doomguy.size.width / 2) doomguy.moveLeft() // Moves The Doomguy To The Left
+    else if(keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2) doomguy.moveDown() // Moves The Doomguy Downwards
+    else if(keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2) doomguy.moveRight() // Moves The Doomguy To The Right
 
     // Doomguy Shoot Functionality
     if(keys.space && !doomguy.is_shooting) {
@@ -150,9 +153,6 @@ function mainLoop():void {
     doomguy.update() // Updates The Doomguy's Frames
     doomguy.draw(game_ctx) // Draws The Doomguy
 
-    imp.update() // Updates The Imp's Frames
-    imp.draw(game_ctx) // Draws The Imp
-
     // Renders Every Bullet
     for(let i:number = all_bullets.length - 1; i >= 0; i--) {
         const one_bullet:Bullet = all_bullets[i] as Bullet // Gets The Bullet
@@ -166,8 +166,8 @@ function mainLoop():void {
             continue
         }
 
-        // If The Bullet Hit The Imp And Haven't Started The Decal Animation Yet
-        if(!one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
+        // If The Bullet Hit The Imp, Haven't Started The Decal Animation Yet And The Imp Isn't Already Death
+        if(!imp.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
             imp.gotHit() // Imp Obtain The Hit
             one_bullet.makeDecal() // Makes The Decal
             continue

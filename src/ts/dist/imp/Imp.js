@@ -7,7 +7,7 @@ export class Imp {
     size;
     is_shooting;
     current_action;
-    health;
+    is_death;
     scale;
     image;
     current_frame;
@@ -15,7 +15,7 @@ export class Imp {
     is_mirrored;
     frames_counter;
     shoot_loops;
-    is_dying;
+    health;
     constructor({ position, velocity, animation_slowdown_level }) {
         this.position = position;
         this.velocity = velocity;
@@ -36,7 +36,7 @@ export class Imp {
         this.is_shooting = false; // Checks If The Imp Is Shooting
         this.shoot_loops = 0; // Stores The Amount Of Current Shooting Animation's Repetitions
         this.health = 100; // Stores The Health Amount
-        this.is_dying = false; // Checks If The Imp Is Dying
+        this.is_death = false; // Checks If The Imp Is Dying
     }
     // Method For Draw The Imp
     draw(ctx) {
@@ -56,16 +56,11 @@ export class Imp {
         else {
             ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
         }
-        // // Shows The Hitbox
-        // ctx.strokeStyle = "red"
-        // ctx.strokeRect(
-        //     this.position.x - this.size.width / 2,
-        //     this.position.y - this.size.height / 2,
-        //     this.size.width,
-        //     this.size.height
-        // )
+        // Shows The Hitbox
+        ctx.strokeStyle = "red";
+        ctx.strokeRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
         // Health Bar
-        if (!this.is_dying) {
+        if (!this.is_death) {
             const HEALTH_BAR_WIDTH = 100; // Defines The Width Of The Health Bar
             const HEALTH_BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
             ctx.fillStyle = "black";
@@ -112,7 +107,7 @@ export class Imp {
             this.frames_counter += 1; // Increases The Frames Counter Value
         }
         // If The Imp Is Dying
-        else if (this.is_dying) {
+        else if (this.is_death) {
             // Changes The Sprite Frame Only In Every Selected Period
             if (this.frames_counter % this.animation_slowdown_level === 0) {
                 this.current_frame += 1; // Increases The Current Sprite Frame
@@ -177,7 +172,7 @@ export class Imp {
             const DEATHS = ["death", "explode_death"]; // Stores The Possible Death Actions
             this.is_moving = false; // Stores The Information That The Imp Isn't Moving
             this.is_shooting = false; // Stores The Information That The Imp Isn't Shooting
-            this.is_dying = true; // Stores The Information That The Imp Is Dying
+            this.is_death = true; // Stores The Information That The Imp Is Dying
             this.current_action = DEATHS[Math.floor(Math.random() * DEATHS.length)]; // Sets The Current Action
         }
     }
