@@ -104,16 +104,16 @@ export class Imp {
             )
         }
 
-        // Shows The Hitbox
+        // // Shows The Hitbox
 
-        ctx.strokeStyle = "red"
+        // ctx.strokeStyle = "red"
 
-        ctx.strokeRect(
-            this.position.x - this.size.width / 2,
-            this.position.y - this.size.height / 2,
-            this.size.width,
-            this.size.height
-        )
+        // ctx.strokeRect(
+        //     this.position.x - this.size.width / 2,
+        //     this.position.y - this.size.height / 2,
+        //     this.size.width,
+        //     this.size.height
+        // )
     }
 
     // Method For Update The Imp

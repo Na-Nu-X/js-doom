@@ -15,6 +15,7 @@ export class Doomguy {
     is_mirrored;
     frames_counter;
     shoot_loops;
+    last_image_source;
     constructor({ position, velocity, animation_slowdown_level }) {
         this.position = position;
         this.velocity = velocity;
@@ -23,6 +24,7 @@ export class Doomguy {
         this.scale = 2;
         this.image = new Image();
         this.image.src = "../../textures/doomguy/PLAYA1.png";
+        // Sets The Size
         this.size = {
             width: this.image.width * this.scale,
             height: this.image.height * this.scale
@@ -34,6 +36,7 @@ export class Doomguy {
         this.current_action = "move_down"; // Stores The Current Used Sprite
         this.is_shooting = false; // Checks If The Doomguy Is Shooting
         this.shoot_loops = 0; // Stores The Amount Of Current Shooting Animation's Repetitions
+        this.last_image_source = "../../textures/doomguy/PLAYA1.png"; // Stores The Last Image Source
     }
     // Method For Draw The Doomguy
     draw(ctx) {
@@ -53,19 +56,26 @@ export class Doomguy {
         else {
             ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
         }
-        // Shows The Hitbox
-        ctx.strokeStyle = "red";
-        ctx.strokeRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
+        // // Shows The Hitbox
+        // ctx.strokeStyle = "red"
+        // ctx.strokeRect(
+        //     this.position.x - this.size.width / 2,
+        //     this.position.y - this.size.height / 2,
+        //     this.size.width,
+        //     this.size.height
+        // )
     }
     // Method For Update The Doomguy
     update() {
         const MAIN_PATH = "../../textures/doomguy/"; // Defines The Main Sprite Path
         const sprite_data = doomguy_sprites[this.current_action]; // Loads Sprites For The Current Action
-        const next_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source
+        const next_image_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source
         this.max_frames = sprite_data.frames.length; // Updates The Amount Of Maximum Sprite Frames
         this.is_mirrored = sprite_data.mirrored; // Updates The Information If The Sprite Is Mirrored
-        if (this.image.src !== next_source)
-            this.image.src = next_source; // Updates The Image Source Only If Differs
+        if (this.last_image_source !== next_image_source) {
+            this.image.src = next_image_source; // Updates The Image Source Only If Differs
+            this.last_image_source = next_image_source; // Updates The Last Image Source
+        }
         // If The Doomguy Is Moving Or Shooting
         if (this.is_moving || this.is_shooting) {
             // Changes The Sprite Frame Only In Every Selected Period
@@ -145,12 +155,16 @@ export class Bullet {
     animation_slowdown_level;
     size;
     direction;
+    can_be_removed;
+    is_colliding;
+    scale;
     image;
     current_frame;
     max_frames;
     frames_counter;
-    is_colliding;
     current_action;
+    collision_loops;
+    last_image_source;
     constructor({ position, animation_slowdown_level, direction }) {
         this.position = position;
         // Sets The Movement Speed
@@ -159,19 +173,37 @@ export class Bullet {
             y: 10
         },
             this.animation_slowdown_level = animation_slowdown_level; // Sets The Level Of Animation Slowdown
-        // Sets The Size
-        this.size = {
-            width: 10,
-            height: 10
-        };
-        this.direction = direction;
+        this.scale = 2;
         this.image = new Image();
         this.image.src = "../../textures/shot_decal/BLUDA0.png";
-        this.current_frame = 0; // Sets The Initial Current Sprite Frame
-        this.max_frames = doomguy_sprites.move_down.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
-        this.frames_counter = 0; // Sets The Initial Frames Counter Value
         this.is_colliding = false; // Stores The Information If The Bullet Is Colliding
+        this.direction = direction;
+        // Sets The Default Size Of The Flying Bullet
+        this.size = {
+            width: 0,
+            height: 0
+        };
+        // Sets The Size Of The Horizontally Flying Bullet
+        if (this.direction === "shoot_left" || this.direction === "shoot_right") {
+            this.size = {
+                width: 20,
+                height: 3
+            };
+        }
+        // Sets The Size Of The Vertically Flying Bullet
+        if (this.direction === "shoot_up" || this.direction === "shoot_down") {
+            this.size = {
+                width: 3,
+                height: 20
+            };
+        }
+        this.current_frame = 0; // Sets The Initial Current Sprite Frame
+        this.max_frames = shot_decal_sprites.enemy_hit.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
+        this.frames_counter = 0; // Sets The Initial Frames Counter Value
         this.current_action = "enemy_hit"; // Stores The Current Used Sprite
+        this.collision_loops = 0; // Stores The Amount Of Current Collision Animation's Repetitions
+        this.can_be_removed = false; // Stores The Information If The Bullet Can Be Removed
+        this.last_image_source = "../../textures/shot_decal/BLUDA0.png"; // Stores The Last Image Source
     }
     // Method For Draw The Bullet
     draw(ctx) {
@@ -187,10 +219,12 @@ export class Bullet {
     update() {
         const MAIN_PATH = "../../textures/shot_decal/"; // Defines The Main Sprite Path
         const sprite_data = shot_decal_sprites[this.current_action]; // Loads Sprites For The Current Action
-        const next_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source
+        const next_image_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source
         this.max_frames = sprite_data.frames.length; // Updates The Amount Of Maximum Sprite Frames
-        if (this.image.src !== next_source)
-            this.image.src = next_source; // Updates The Image Source Only If Differs
+        if (this.last_image_source !== next_image_source) {
+            this.image.src = next_image_source; // Updates The Image Source Only If Differs
+            this.last_image_source = next_image_source; // Updates The Last Image Source
+        }
         // Moves The Bullet
         if (!this.is_colliding) {
             if (this.direction === "shoot_up")
@@ -204,14 +238,33 @@ export class Bullet {
         }
         // Shows The Enemy Hit Animation
         else {
+            // Sets The Size Of The Decal Image
+            this.size = {
+                width: this.image.width * this.scale,
+                height: this.image.height * this.scale
+            };
             // Changes The Sprite Frame Only In Every Selected Period
             if (this.frames_counter % this.animation_slowdown_level === 0) {
                 this.current_frame += 1; // Increases The Current Sprite Frame
                 // When The Sprite Animation Has Finished
                 if (this.current_frame >= this.max_frames) {
-                    this.current_frame = 0; // Resets The Current Sprite Frame Value
+                    // Handles The Enemy Hit Animation Loop
+                    if (this.is_colliding) {
+                        const REPEAT_TIMES = 3; // Sets The Amount Of Collision Animation's Repetitions
+                        this.collision_loops += 1; // Increases The Amount Of Current Collision Animation's Repetitions
+                        // Ends The Collision Animation When The Collision Animation Reached The Maximum Amount Of Loops
+                        if (this.collision_loops >= REPEAT_TIMES) {
+                            this.can_be_removed = true; // Stores The Information That The Bullet Can Be Removed
+                            this.current_frame = 0; // Resets The Current Sprite Frame Value
+                        }
+                        else
+                            this.current_frame = 0; // Resets The Current Sprite Frame Value
+                    }
+                    else
+                        this.current_frame = 0; // Resets The Current Sprite Frame Value
                 }
             }
+            this.frames_counter += 1; // Increases The Frames Counter Value
         }
     }
     // Method For Make The Bullet Decal

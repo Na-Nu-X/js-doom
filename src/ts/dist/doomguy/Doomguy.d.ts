@@ -22,6 +22,7 @@ interface BulletConfig {
     animation_slowdown_level: number;
     size?: Size;
     direction: string;
+    can_be_removed?: boolean;
 }
 export declare class Doomguy {
     position: Position;
@@ -38,6 +39,7 @@ export declare class Doomguy {
     private is_mirrored;
     private frames_counter;
     private shoot_loops;
+    private last_image_source;
     constructor({ position, velocity, animation_slowdown_level }: DoomguyConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
@@ -53,12 +55,16 @@ export declare class Bullet {
     animation_slowdown_level: number;
     size: Size;
     direction: string;
+    can_be_removed: boolean;
+    private is_colliding;
+    private scale;
     private image;
     private current_frame;
     private max_frames;
     private frames_counter;
-    private is_colliding;
     private current_action;
+    private collision_loops;
+    private last_image_source;
     constructor({ position, animation_slowdown_level, direction }: BulletConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;

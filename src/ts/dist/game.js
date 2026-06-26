@@ -44,15 +44,15 @@ const imp = new Imp({
     is_moving: false // Stores The Information That The Doomguy Isn't Moving
 });
 // Function For Check The Collision Between Two Rectangles
-function checkCollision(rectangle_1, rectangle_2) {
+function checkCollision(rectangle_1, rectangle_2, offset = 0) {
     const rectangle_1_left = rectangle_1.position.x - (rectangle_1.size.width / 2);
     const rectangle_1_right = rectangle_1.position.x + (rectangle_1.size.width / 2);
     const rectangle_1_top = rectangle_1.position.y - (rectangle_1.size.height / 2);
     const rectangle_1_bottom = rectangle_1.position.y + (rectangle_1.size.height / 2);
-    const rectangle_2_left = rectangle_2.position.x - (rectangle_2.size.width / 2);
-    const rectangle_2_right = rectangle_2.position.x + (rectangle_2.size.width / 2);
-    const rectangle_2_top = rectangle_2.position.y - (rectangle_2.size.height / 2);
-    const rectangle_2_bottom = rectangle_2.position.y + (rectangle_2.size.height / 2);
+    const rectangle_2_left = rectangle_2.position.x - (rectangle_2.size.width / 2) + offset;
+    const rectangle_2_right = rectangle_2.position.x + (rectangle_2.size.width / 2) - offset;
+    const rectangle_2_top = rectangle_2.position.y - (rectangle_2.size.height / 2) + offset;
+    const rectangle_2_bottom = rectangle_2.position.y + (rectangle_2.size.height / 2) - offset;
     return (rectangle_1_left < rectangle_2_right &&
         rectangle_1_right > rectangle_2_left &&
         rectangle_1_top < rectangle_2_bottom &&
@@ -120,10 +120,11 @@ function mainLoop() {
         one_bullet.update(); // Updates The Bullet
         one_bullet.draw(game_ctx); // Draws The Bullet
         // If The Bullet Hit The Imp
-        if (checkCollision(one_bullet, imp)) {
+        if (checkCollision(one_bullet, imp, 10)) {
             imp.gotHit(); // Imp Obtain The Hit
             one_bullet.makeDecal(); // Makes The Decal
-            // all_bullets.splice(i, 1) // Removes The Bullet From The All Bullets
+            if (one_bullet.can_be_removed)
+                all_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
             continue;
         }
         // If The Bullet Hit The Map Border

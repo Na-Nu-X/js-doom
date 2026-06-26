@@ -67,16 +67,16 @@ const imp:Imp = new Imp({
 })
 
 // Function For Check The Collision Between Two Rectangles
-function checkCollision(rectangle_1:any, rectangle_2:any):boolean {
+function checkCollision(rectangle_1:any, rectangle_2:any, offset:number = 0):boolean {
     const rectangle_1_left:number = rectangle_1.position.x - (rectangle_1.size.width / 2)
     const rectangle_1_right:number = rectangle_1.position.x + (rectangle_1.size.width / 2)
     const rectangle_1_top:number = rectangle_1.position.y - (rectangle_1.size.height / 2)
     const rectangle_1_bottom:number = rectangle_1.position.y + (rectangle_1.size.height / 2)
 
-    const rectangle_2_left:number = rectangle_2.position.x - (rectangle_2.size.width / 2)
-    const rectangle_2_right:number = rectangle_2.position.x + (rectangle_2.size.width / 2)
-    const rectangle_2_top:number = rectangle_2.position.y - (rectangle_2.size.height / 2)
-    const rectangle_2_bottom:number = rectangle_2.position.y + (rectangle_2.size.height / 2)
+    const rectangle_2_left:number = rectangle_2.position.x - (rectangle_2.size.width / 2) + offset
+    const rectangle_2_right:number = rectangle_2.position.x + (rectangle_2.size.width / 2) - offset
+    const rectangle_2_top:number = rectangle_2.position.y - (rectangle_2.size.height / 2) + offset
+    const rectangle_2_bottom:number = rectangle_2.position.y + (rectangle_2.size.height / 2) - offset
 
     return (
         rectangle_1_left < rectangle_2_right &&
@@ -161,10 +161,10 @@ function mainLoop():void {
         one_bullet.draw(game_ctx) // Draws The Bullet
 
         // If The Bullet Hit The Imp
-        if(checkCollision(one_bullet, imp)) {
+        if(checkCollision(one_bullet, imp, 10)) {
             imp.gotHit() // Imp Obtain The Hit
             one_bullet.makeDecal() // Makes The Decal
-            // all_bullets.splice(i, 1) // Removes The Bullet From The All Bullets
+            if(one_bullet.can_be_removed) all_bullets.splice(i, 1) // Removes The Bullet From The All Bullets
             continue
         }
 
