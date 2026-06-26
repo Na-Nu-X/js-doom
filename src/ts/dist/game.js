@@ -119,12 +119,15 @@ function mainLoop() {
         const one_bullet = all_bullets[i]; // Gets The Bullet
         one_bullet.update(); // Updates The Bullet
         one_bullet.draw(game_ctx); // Draws The Bullet
-        // If The Bullet Hit The Imp
-        if (checkCollision(one_bullet, imp, 10)) {
+        // Removes The Bullet From The All Bullets
+        if (one_bullet.can_be_removed) {
+            all_bullets.splice(i, 1);
+            continue;
+        }
+        // If The Bullet Hit The Imp And Haven't Started The Decal Animation Yet
+        if (!one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
             imp.gotHit(); // Imp Obtain The Hit
             one_bullet.makeDecal(); // Makes The Decal
-            if (one_bullet.can_be_removed)
-                all_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
             continue;
         }
         // If The Bullet Hit The Map Border

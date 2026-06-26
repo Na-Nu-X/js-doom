@@ -19,6 +19,7 @@ export declare class Imp {
     size: Size;
     is_shooting: boolean;
     current_action: string;
+    health: number;
     private scale;
     private image;
     private current_frame;
@@ -26,6 +27,7 @@ export declare class Imp {
     private is_mirrored;
     private frames_counter;
     private shoot_loops;
+    private is_dying;
     constructor({ position, velocity, animation_slowdown_level }: ImpConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;

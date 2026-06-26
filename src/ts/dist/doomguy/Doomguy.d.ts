@@ -32,6 +32,7 @@ export declare class Doomguy {
     size: Size;
     is_shooting: boolean;
     current_action: string;
+    health: number;
     private scale;
     private image;
     private current_frame;
@@ -56,7 +57,7 @@ export declare class Bullet {
     size: Size;
     direction: string;
     can_be_removed: boolean;
-    private is_colliding;
+    is_colliding: boolean;
     private scale;
     private image;
     private current_frame;

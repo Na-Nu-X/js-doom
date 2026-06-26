@@ -40,6 +40,7 @@ export class Doomguy {
     size:Size
     is_shooting:boolean
     current_action:string
+    health:number
 
     private scale:number
     private image:HTMLImageElement
@@ -82,6 +83,8 @@ export class Doomguy {
         this.shoot_loops = 0 // Stores The Amount Of Current Shooting Animation's Repetitions
 
         this.last_image_source = "../../textures/doomguy/PLAYA1.png" // Stores The Last Image Source
+
+        this.health = 100 // Stores The Health Amount
     }
     
     // Method For Draw The Doomguy
@@ -130,6 +133,31 @@ export class Doomguy {
         //     this.size.width,
         //     this.size.height
         // )
+
+        // Health Bar
+
+        const HEALTH_BAR_WIDTH:number = 100 // Defines The Width Of The Health Bar
+        const HEALTH_BAR_HEIGHT:number = 5 // Defines The Height Of The Health Bar
+
+        ctx.fillStyle = "black"
+
+        // Creates The Health Bar Background
+        ctx.fillRect(
+            this.position.x - HEALTH_BAR_WIDTH / 2,
+            this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, 
+            HEALTH_BAR_WIDTH, 
+            HEALTH_BAR_HEIGHT
+        )
+
+        ctx.fillStyle = "red"
+
+        // Creates The Health Bar Indicator
+        ctx.fillRect(
+            this.position.x - HEALTH_BAR_WIDTH / 2,
+            this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, 
+            this.health, 
+            HEALTH_BAR_HEIGHT
+        )
     }
 
     // Method For Update The Doomguy
@@ -233,8 +261,8 @@ export class Bullet {
     size:Size
     direction:string
     can_be_removed:boolean
+    is_colliding:boolean
     
-    private is_colliding:boolean
     private scale:number
     private image:HTMLImageElement
     private current_frame:number
