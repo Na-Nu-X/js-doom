@@ -1,4 +1,7 @@
 import { imp as imp_sprites } from "./data.js"
+import { imp_fireball as imp_fireball_sprites } from "./data.js"
+
+import { getBulletPosition } from "../game.js"
 
 import type { 
     Position, 
@@ -17,7 +20,8 @@ interface FireballConfig {
     position:Position,
     velocity?:Velocity,
     size?:Size,
-    direction:string
+    direction:string,
+    animation_slowdown_level:number
 }
 
 export class Imp {
@@ -36,7 +40,6 @@ export class Imp {
     private max_frames:number
     private is_mirrored:boolean
     private frames_counter:number
-    private shoot_loops:number
     private health:number
 
     constructor({
@@ -64,10 +67,9 @@ export class Imp {
         this.is_mirrored = false // Sets The Default Information If The Sprite Is Mirrored
         this.frames_counter = 0 // Sets The Initial Frames Counter Value
 
-        this.current_action = "move_down" // Stores The Current Used Sprite
+        this.current_action = "move_up" // Stores The Current Used Sprite
 
         this.is_shooting = false // Checks If The Imp Is Shooting
-        this.shoot_loops = 0 // Stores The Amount Of Current Shooting Animation's Repetitions
 
         this.health = 100 // Stores The Health Amount
         this.is_death = false // Checks If The Imp Is Dying
@@ -149,7 +151,7 @@ export class Imp {
     }
 
     // Method For Update The Imp
-    update():void {
+    update(all_fireballs:Fireball[]):void {
         const MAIN_PATH:string = "../../textures/imp/" // Defines The Main Sprite Path
         const sprite_data = imp_sprites[this.current_action as keyof typeof imp_sprites] // Loads Sprites For The Current Action
         const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
@@ -169,19 +171,21 @@ export class Imp {
                 if(this.current_frame >= this.max_frames) {
                     // Handles The Shooting Animation Loop
                     if(this.is_shooting) {
-                        const REPEAT_TIMES:number = 3 // Sets The Amount Of Shooting Animation's Repetitions
+                        this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
+                        this.current_action = this.current_action.replace("shoot", "move") // Replaces The Shoot Action With The Move Action
+                        this.current_frame = 0 // Resets The Current Sprite Frame Value
 
-                        this.shoot_loops += 1 // Increases The Amount Of Current Shooting Animation's Repetitions
+                        const fireball_position:Position = getBulletPosition(this.current_action, this.position) // Gets The Fireball Position
 
-                        // Ends The Shooting Animation When The Shooting Animation Reached The Maximum Amount Of Loops
-                        if(this.shoot_loops >= REPEAT_TIMES) {
-                            this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
-                            this.current_action = this.current_action.replace("shoot", "move") // Replaces The Shoot Action With The Move Action
-                            this.current_frame = 0 // Resets The Current Sprite Frame Value
-                        }
-                        
-                        else this.current_frame = 0 // Resets The Current Sprite Frame Value
-                    } 
+                        // Creates The Fireball
+                        const fireball:Fireball = new Fireball({
+                            position: fireball_position, // Sets The Spawn Position
+                            direction: this.current_action, // Sets The Fly Direction
+                            animation_slowdown_level: 30 // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+                        })
+
+                        all_fireballs.push(fireball) // Stores The New Fireball To All Fireballs
+                    }
                     
                     else this.current_frame = 0 // Resets The Current Sprite Frame Value
                 }
@@ -245,7 +249,6 @@ export class Imp {
         // If The Imp Isn't Shooting
         if(!this.is_shooting) {
             this.is_shooting = true // Stores The Information That The Imp Is Shooting
-            this.shoot_loops = 0 // Resets The Amount Of Current Shooting Animation's Repetitions
             this.current_frame = 0 // Resets The Current Sprite Frame Value
             this.frames_counter = 0 // Resets The Frames Counter Value
 
@@ -255,7 +258,7 @@ export class Imp {
 
     // Method For Obtain The Hit
     gotHit():void {
-        this.health -= 50
+        this.health -= 25 // Decreases The Health
 
         // When The Health Gets To 0
         if(this.health <= 0) {
@@ -264,6 +267,8 @@ export class Imp {
             this.is_moving = false // Stores The Information That The Imp Isn't Moving
             this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
             this.is_death = true // Stores The Information That The Imp Is Dying
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
             this.current_action = DEATHS[Math.floor(Math.random() * DEATHS.length)] as string // Sets The Current Action
         }
     }
@@ -272,49 +277,139 @@ export class Imp {
 export class Fireball {
     position:Position
     velocity:Velocity
+    animation_slowdown_level:number
     size:Size
     direction:string
+    can_be_removed:boolean
+    is_colliding:boolean
+    
+    private scale:number
+    private image:HTMLImageElement
+    private current_frame:number
+    private max_frames:number
+    private frames_counter:number
+    private current_action:string
+    private collision_loops:number
+    private last_image_source:string
 
     constructor({
         position,
-        velocity,
-        size,
+        animation_slowdown_level,
         direction
     }:FireballConfig) {
         this.position = position
 
         // Sets The Movement Speed
         this.velocity = { 
-            x: 10,
-            y: 10
+            x: 3,
+            y: 3
         },
 
-        // Sets The Size
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+
+        this.scale = 2
+
+        this.image = new Image()
+        this.image.src = "../../textures/imp_fireball/BAL1A0.png"
+        
+        this.is_colliding = false // Stores The Information If The Fireball Is Colliding
+        this.direction = direction
+
+        // Sets The Size Of The Flying Fireball
         this.size = {
-            width: 10,
-            height: 10
+            width: this.image.width,
+            height: this.image.height
         }
 
-        this.direction = direction
+        this.current_frame = 0 // Sets The Initial Current Sprite Frame
+        this.max_frames = imp_fireball_sprites.fly.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.frames_counter = 0 // Sets The Initial Frames Counter Value
+        this.current_action = "fly" // Stores The Current Used Sprite
+        this.collision_loops = 0 // Stores The Amount Of Current Collision Animation's Repetitions
+        this.can_be_removed = false // Stores The Information If The Fireball Can Be Removed
+        this.last_image_source = "../../textures/imp_fireball/BAL1A0.png" // Stores The Last Image Source
     }
 
     // Method For Draw The Fireball
     draw(ctx:CanvasRenderingContext2D):void {
-        ctx.fillStyle = "red"
+        if(!this.is_colliding) {
+            ctx.drawImage(
+                this.image,
+                this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+        }
 
-        ctx.fillRect(
-            this.position.x - this.size.width / 2,
-            this.position.y - this.size.height / 2,
-            this.size.width,
-            this.size.height
-        )
+        else {
+            ctx.drawImage(
+                this.image,
+                this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+        }
     }
 
-    // Method For Update The Fireball
     update():void {
-        if(this.direction === "shoot_up") this.position.y -= this.velocity.y
-        if(this.direction === "shoot_left") this.position.x -= this.velocity.x
-        if(this.direction === "shoot_down") this.position.y += this.velocity.y
-        if(this.direction === "shoot_right") this.position.x += this.velocity.x
+        const MAIN_PATH:string = "../../textures/imp_fireball/" // Defines The Main Sprite Path
+        const sprite_data = imp_fireball_sprites[this.current_action as keyof typeof imp_fireball_sprites] // Loads Sprites For The Current Action
+        const next_image_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
+
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+
+        if(this.last_image_source !== next_image_source) {
+            this.image.src = next_image_source // Updates The Image Source Only If Differs
+            this.last_image_source = next_image_source // Updates The Last Image Source
+        }
+
+        // Sets The Size Of The Decal Image
+        if(this.image.width > 0) {
+            this.size = {
+                width: this.image.width * this.scale,
+                height: this.image.height * this.scale
+            }
+        }
+
+        // Moves The Fireball
+        if(!this.is_colliding) {
+            if(this.direction === "move_up") this.position.y -= this.velocity.y
+            if(this.direction === "move_left") this.position.x -= this.velocity.x
+            if(this.direction === "move_down") this.position.y += this.velocity.y
+            if(this.direction === "move_right") this.position.x += this.velocity.x
+        }
+
+        // Changes The Sprite Frame Only In Every Selected Period
+        if(this.frames_counter % this.animation_slowdown_level === 0) {
+            this.current_frame += 1 // Increases The Current Sprite Frame
+
+            // When The Sprite Animation Has Finished
+            if(this.current_frame >= this.max_frames) {
+                // Handles The Hit Animation Loop
+                if(this.is_colliding) {
+                    const REPEAT_TIMES:number = 3 // Sets The Amount Of Collision Animation's Repetitions
+
+                    this.collision_loops += 1 // Increases The Amount Of Current Collision Animation's Repetitions
+
+                    // Ends The Collision Animation When The Collision Animation Reached The Maximum Amount Of Loops
+                    if(this.collision_loops >= REPEAT_TIMES) {
+                        this.can_be_removed = true // Stores The Information That The Fireball Can Be Removed
+                    }
+                }
+                
+                this.current_frame = 0 // Resets The Current Sprite Frame Value
+            }
+        }
+
+        this.frames_counter += 1 // Increases The Frames Counter Value (TOTO TERAZ BEŽÍ VŽDY)
+    }
+
+    // Method For Make The Fireball Decal
+    makeDecal():void {
+        this.is_colliding = true
+        this.current_action = "impact" // Sets The Current Action
+        this.current_frame = 0 // Resets The Current Sprite Frame Value
     }
 }

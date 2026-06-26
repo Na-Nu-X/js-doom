@@ -9,6 +9,7 @@ export class Doomguy {
     is_shooting;
     current_action;
     health;
+    is_death;
     scale;
     image;
     current_frame;
@@ -39,6 +40,7 @@ export class Doomguy {
         this.shoot_loops = 0; // Stores The Amount Of Current Shooting Animation's Repetitions
         this.last_image_source = "../../textures/doomguy/PLAYA1.png"; // Stores The Last Image Source
         this.health = 100; // Stores The Health Amount
+        this.is_death = false; // Checks If The Doomguy Is Dying
     }
     // Method For Draw The Doomguy
     draw(ctx) {
@@ -62,14 +64,16 @@ export class Doomguy {
         ctx.strokeStyle = "red";
         ctx.strokeRect(this.position.x - this.size.width / 2, this.position.y - this.size.height / 2, this.size.width, this.size.height);
         // Health Bar
-        const HEALTH_BAR_WIDTH = 100; // Defines The Width Of The Health Bar
-        const HEALTH_BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
-        ctx.fillStyle = "black";
-        // Creates The Health Bar Background
-        ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
-        ctx.fillStyle = "red";
-        // Creates The Health Bar Indicator
-        ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, this.health, HEALTH_BAR_HEIGHT);
+        if (!this.is_death) {
+            const HEALTH_BAR_WIDTH = 100; // Defines The Width Of The Health Bar
+            const HEALTH_BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
+            ctx.fillStyle = "black";
+            // Creates The Health Bar Background
+            ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
+            ctx.fillStyle = "red";
+            // Creates The Health Bar Indicator
+            ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, this.health, HEALTH_BAR_HEIGHT);
+        }
     }
     // Method For Update The Doomguy
     update() {
@@ -104,6 +108,18 @@ export class Doomguy {
                     }
                     else
                         this.current_frame = 0; // Resets The Current Sprite Frame Value
+                }
+            }
+            this.frames_counter += 1; // Increases The Frames Counter Value
+        }
+        // If The Doomguy Is Dying
+        else if (this.is_death) {
+            // Changes The Sprite Frame Only In Every Selected Period
+            if (this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1; // Increases The Current Sprite Frame
+                // When The Sprite Animation Has Finished
+                if (this.current_frame >= this.max_frames) {
+                    this.current_frame = this.max_frames - 1; // Stays At The Last Frame
                 }
             }
             this.frames_counter += 1; // Increases The Frames Counter Value
@@ -152,6 +168,20 @@ export class Doomguy {
             this.frames_counter = 0; // Resets The Frames Counter Value
             if (this.current_action.startsWith("move"))
                 this.current_action = this.current_action.replace("move", "shoot"); // Replaces The Move Action With The Shoot Action
+        }
+    }
+    // Method For Obtain The Hit
+    gotHit() {
+        this.health -= 25; // Decreases The Health
+        // When The Health Gets To 0
+        if (this.health <= 0) {
+            const DEATHS = ["death", "explode_death"]; // Stores The Possible Death Actions
+            this.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
+            this.is_shooting = false; // Stores The Information That The Doomguy Isn't Shooting
+            this.is_death = true; // Stores The Information That The Doomguy Is Dying
+            this.current_frame = 0; // Resets The Current Sprite Frame Value
+            this.frames_counter = 0; // Resets The Frames Counter Value
+            this.current_action = DEATHS[Math.floor(Math.random() * DEATHS.length)]; // Sets The Current Action
         }
     }
 }

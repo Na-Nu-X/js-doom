@@ -1,5 +1,5 @@
 import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
-import { Imp } from "./imp/Imp.js";
+import { Fireball, Imp } from "./imp/Imp.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
 const game_ctx = game.getContext("2d"); // Gets The Game CTX
 game.width = window.innerWidth; // Sets The Game Canvas Width
@@ -43,6 +43,7 @@ const imp = new Imp({
     animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
     is_moving: false // Stores The Information That The Doomguy Isn't Moving
 });
+const all_fireballs = []; // Stores All Fireballs
 // Function For Check The Collision Between Two Rectangles
 function checkCollision(rectangle_1, rectangle_2, offset = 0) {
     const rectangle_1_left = rectangle_1.position.x - (rectangle_1.size.width / 2);
@@ -59,28 +60,28 @@ function checkCollision(rectangle_1, rectangle_2, offset = 0) {
         rectangle_1_bottom > rectangle_2_top);
 }
 // Fubction For Get The Bullet Position
-function getBulletPosition(current_action, position_of_shooter) {
+export function getBulletPosition(current_action, position_of_shooter) {
     const position = {
         x: 0,
         y: 0
     };
     // Up Spawn Position
-    if (current_action === "shoot_up") {
+    if (current_action === "shoot_up" || current_action === "move_up") {
         position.x = position_of_shooter.x,
             position.y = position_of_shooter.y - doomguy.size.height / 2;
     }
     // Left Spawn Position
-    if (current_action === "shoot_left") {
+    if (current_action === "shoot_left" || current_action === "move_left") {
         position.x = position_of_shooter.x - doomguy.size.width / 2,
             position.y = position_of_shooter.y - 12;
     }
     // Down Spawn Position
-    if (current_action === "shoot_down") {
+    if (current_action === "shoot_down" || current_action === "move_down") {
         position.x = position_of_shooter.x - 18,
             position.y = position_of_shooter.y - 12;
     }
     // Right Spawn Position
-    if (current_action === "shoot_right") {
+    if (current_action === "shoot_right" || current_action === "move_right") {
         position.x = position_of_shooter.x + doomguy.size.width / 2,
             position.y = position_of_shooter.y - 12;
     }
@@ -89,28 +90,31 @@ function getBulletPosition(current_action, position_of_shooter) {
 // Function For Initialize The Main Loop
 function mainLoop() {
     game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
-    imp.update(); // Updates The Imp's Frames
+    imp.update(all_fireballs); // Updates The Imp's Frames
     imp.draw(game_ctx); // Draws The Imp
     doomguy.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
-    if (keys.w && doomguy.position.y > 0 + doomguy.size.height / 2)
-        doomguy.moveUp(); // Moves The Doomguy Upwards
-    else if (keys.a && doomguy.position.x > 0 + doomguy.size.width / 2)
-        doomguy.moveLeft(); // Moves The Doomguy To The Left
-    else if (keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2)
-        doomguy.moveDown(); // Moves The Doomguy Downwards
-    else if (keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2)
-        doomguy.moveRight(); // Moves The Doomguy To The Right
-    // Doomguy Shoot Functionality
-    if (keys.space && !doomguy.is_shooting) {
-        doomguy.shoot(); // Doomguy Shoots
-        const bullet_position = getBulletPosition(doomguy.current_action, doomguy.position); // Gets The Bullet Position
-        // Creates The Bullet
-        const bullet = new Bullet({
-            position: bullet_position, // Sets The Spawn Position
-            direction: doomguy.current_action, // Sets The Fly Direction
-            animation_slowdown_level: 30 // Sets The Timeout Between Sprite Animations (Every 30th Frame)
-        });
-        all_bullets.push(bullet); // Stores The New Bullet To All Bullets
+    // Enables Doomguy's Actions Only If Is Still Alive
+    if (!doomguy.is_death) {
+        if (keys.w && doomguy.position.y > 0 + doomguy.size.height / 2)
+            doomguy.moveUp(); // Moves The Doomguy Upwards
+        else if (keys.a && doomguy.position.x > 0 + doomguy.size.width / 2)
+            doomguy.moveLeft(); // Moves The Doomguy To The Left
+        else if (keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2)
+            doomguy.moveDown(); // Moves The Doomguy Downwards
+        else if (keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2)
+            doomguy.moveRight(); // Moves The Doomguy To The Right
+        // Doomguy Shoot Functionality
+        if (keys.space && !doomguy.is_shooting) {
+            doomguy.shoot(); // Doomguy Shoots
+            const bullet_position = getBulletPosition(doomguy.current_action, doomguy.position); // Gets The Bullet Position
+            // Creates The Bullet
+            const bullet = new Bullet({
+                position: bullet_position, // Sets The Spawn Position
+                direction: doomguy.current_action, // Sets The Fly Direction
+                animation_slowdown_level: 30 // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+            });
+            all_bullets.push(bullet); // Stores The New Bullet To All Bullets
+        }
     }
     doomguy.update(); // Updates The Doomguy's Frames
     doomguy.draw(game_ctx); // Draws The Doomguy
@@ -138,6 +142,30 @@ function mainLoop() {
             all_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
         }
     }
+    // Renders Every Fireball
+    for (let i = all_fireballs.length - 1; i >= 0; i--) {
+        const one_fireball = all_fireballs[i]; // Gets The Fireball
+        one_fireball.update(); // Updates The Fireball
+        one_fireball.draw(game_ctx); // Draws The Fireball
+        // Removes The Fireball From The All Fireballs
+        if (one_fireball.can_be_removed) {
+            all_fireballs.splice(i, 1);
+            continue;
+        }
+        // If The Fireball Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+        if (!doomguy.is_death && !one_fireball.is_colliding && checkCollision(one_fireball, doomguy, 10)) {
+            doomguy.gotHit(); // Doomguy Obtain The Hit
+            one_fireball.makeDecal(); // Makes The Decal
+            continue;
+        }
+        // If The Fireball Hit The Map Border
+        if (one_fireball.position.x <= 0 ||
+            one_fireball.position.x >= window.innerWidth ||
+            one_fireball.position.y <= 0 ||
+            one_fireball.position.y >= window.innerHeight) {
+            all_fireballs.splice(i, 1); // Removes The Fireball From The All Fireballs
+        }
+    }
     requestAnimationFrame(mainLoop); // Loops The Main Loop
 }
 mainLoop(); // Initializes The Main Loop
@@ -162,6 +190,8 @@ window.addEventListener("keydown", function (event) {
         keys.d = true;
     else if (key === " ")
         keys.space = true;
+    if (key === "q")
+        imp.shoot(); // TEST
 });
 // Window Keyup Functionalities
 window.addEventListener("keyup", function (event) {

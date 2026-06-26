@@ -10,6 +10,7 @@ interface FireballConfig {
     velocity?: Velocity;
     size?: Size;
     direction: string;
+    animation_slowdown_level: number;
 }
 export declare class Imp {
     position: Position;
@@ -26,11 +27,10 @@ export declare class Imp {
     private max_frames;
     private is_mirrored;
     private frames_counter;
-    private shoot_loops;
     private health;
     constructor({ position, velocity, animation_slowdown_level }: ImpConfig);
     draw(ctx: CanvasRenderingContext2D): void;
-    update(): void;
+    update(all_fireballs: Fireball[]): void;
     moveUp(): void;
     moveLeft(): void;
     moveDown(): void;
@@ -41,11 +41,23 @@ export declare class Imp {
 export declare class Fireball {
     position: Position;
     velocity: Velocity;
+    animation_slowdown_level: number;
     size: Size;
     direction: string;
-    constructor({ position, velocity, size, direction }: FireballConfig);
+    can_be_removed: boolean;
+    is_colliding: boolean;
+    private scale;
+    private image;
+    private current_frame;
+    private max_frames;
+    private frames_counter;
+    private current_action;
+    private collision_loops;
+    private last_image_source;
+    constructor({ position, animation_slowdown_level, direction }: FireballConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
+    makeDecal(): void;
 }
 export {};
 //# sourceMappingURL=Imp.d.ts.map

@@ -33,6 +33,7 @@ export declare class Doomguy {
     is_shooting: boolean;
     current_action: string;
     health: number;
+    is_death: boolean;
     private scale;
     private image;
     private current_frame;
@@ -49,6 +50,7 @@ export declare class Doomguy {
     moveDown(): void;
     moveRight(): void;
     shoot(): void;
+    gotHit(): void;
 }
 export declare class Bullet {
     position: Position;
