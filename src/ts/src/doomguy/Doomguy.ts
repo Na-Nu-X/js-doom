@@ -20,7 +20,7 @@ interface DoomguyConfig {
     position:Position,
     velocity:Velocity,
     animation_slowdown_level:number,
-    is_moving:boolean,
+    is_moving:boolean
 }
 
 interface BulletConfig {
@@ -127,16 +127,16 @@ export class Doomguy {
             )
         }
 
-        // Shows The Hitbox
+        // // Shows The Hitbox
 
-        ctx.strokeStyle = "red"
+        // ctx.strokeStyle = "red"
 
-        ctx.strokeRect(
-            this.position.x - this.size.width / 2,
-            this.position.y - this.size.height / 2,
-            this.size.width,
-            this.size.height
-        )
+        // ctx.strokeRect(
+        //     this.position.x - this.size.width / 2,
+        //     this.position.y - this.size.height / 2,
+        //     this.size.width,
+        //     this.size.height
+        // )
 
         // Health Bar
 
@@ -298,6 +298,11 @@ export class Doomguy {
             this.frames_counter = 0 // Resets The Frames Counter Value
             this.current_action = DEATHS[Math.floor(Math.random() * DEATHS.length)] as string // Sets The Current Action
         }
+    }
+
+    // Method For Add The Health
+    addHealth(amount:number = 10):void {
+        this.health += amount // Increases The Health
     }
 }
 

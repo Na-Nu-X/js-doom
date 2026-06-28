@@ -52,6 +52,7 @@ export declare class Doomguy {
     moveRight(): void;
     shoot(): void;
     gotHit(from: string): void;
+    addHealth(amount?: number): void;
 }
 export declare class Bullet {
     position: Position;

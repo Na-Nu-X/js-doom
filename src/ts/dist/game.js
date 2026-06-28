@@ -1,6 +1,8 @@
 import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
 import { Fireball, Imp } from "./imp/Imp.js";
 import { Map } from "./map/Map.js";
+import { HealthBonus } from "./health_bonus/HealthBonus.js";
+import { health_bonus } from "./health_bonus/data.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
 const game_ctx = game.getContext("2d"); // Gets The Game CTX
 game.width = window.innerWidth; // Sets The Game Canvas Width
@@ -94,11 +96,38 @@ function initializeGame() {
         is_moving: false // Stores The Information That The Doomguy Isn't Moving
     });
     const all_fireballs = []; // Stores All Fireballs
+    const all_health_bonuses = []; // Stores All Health Bonuses
+    // Creates 10 Health Bonuses
+    for (let i = 0; i < 10; i++) {
+        const SCALE = 2; // Defines The Scale
+        const HEALTH_BONUS_WIDTH = 14 * SCALE; // Defines The Width Of The Health Bonus
+        const HEALTH_BONUS_HEIGHT = 18 * SCALE; // Defines The Height Of The Health Bonus
+        const health_bonus = new HealthBonus({
+            // Sets The Spawn Position
+            position: {
+                x: Math.floor(Math.random() * (window.innerWidth - HEALTH_BONUS_WIDTH)),
+                y: Math.floor(Math.random() * (window.innerHeight - HEALTH_BONUS_HEIGHT))
+            },
+            animation_slowdown_level: 60 // Sets The Timeout Between Sprite Animations (Every 60th Frame)
+        });
+        all_health_bonuses.push(health_bonus); // Stores The New Health Bonus To All Health Bonuses
+    }
     // Function For Initialize The Main Loop
     function mainLoop() {
         game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
         game_ctx.imageSmoothingEnabled = false; // Makes Sharp Images
         map.draw(game_ctx); // Draws The Map
+        // Renders Every Health Bonus
+        for (let i = all_health_bonuses.length - 1; i >= 0; i--) {
+            const one_health_bonus = all_health_bonuses[i]; // Gets The Health Bonus
+            one_health_bonus.draw(game_ctx); // Draws The Health Bonus
+            one_health_bonus.update(); // Updates The Health Bonus
+            // If The Doomguy Picked Up The Health Bonus And Isn't Already Death
+            if (!doomguy.is_death && checkCollision(one_health_bonus, doomguy)) {
+                doomguy.addHealth(10); // Adds Health For The Doomguy
+                all_health_bonuses.splice(i, 1); // Removes The Health Bonus From The All Health Bonuses
+            }
+        }
         doomguy.draw(game_ctx); // Draws The Doomguy
         imp.draw(game_ctx); // Draws The Imp
         if (game_paused)

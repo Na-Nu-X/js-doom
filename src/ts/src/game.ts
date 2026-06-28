@@ -15,6 +15,9 @@ import type {
     Size 
 } from "./doomguy/Doomguy.js"
 
+import { HealthBonus } from "./health_bonus/HealthBonus.js"
+import { health_bonus } from "./health_bonus/data.js"
+
 const game:HTMLCanvasElement = document.querySelector(".game") as HTMLCanvasElement // Gets The Game Canvas
 const game_ctx:CanvasRenderingContext2D = game.getContext("2d") as CanvasRenderingContext2D // Gets The Game CTX
 
@@ -138,6 +141,27 @@ function initializeGame():void {
     })
     
     const all_fireballs:Fireball[] = [] // Stores All Fireballs
+
+    const all_health_bonuses:HealthBonus[] = [] // Stores All Health Bonuses
+
+    // Creates 10 Health Bonuses
+    for(let i:number = 0; i < 10; i++) {
+        const SCALE:number = 2 // Defines The Scale
+        const HEALTH_BONUS_WIDTH:number = 14 * SCALE // Defines The Width Of The Health Bonus
+        const HEALTH_BONUS_HEIGHT:number = 18 * SCALE // Defines The Height Of The Health Bonus
+
+        const health_bonus = new HealthBonus({
+            // Sets The Spawn Position
+            position: { 
+                x: Math.floor(Math.random() * (window.innerWidth - HEALTH_BONUS_WIDTH)),
+                y: Math.floor(Math.random() * (window.innerHeight - HEALTH_BONUS_HEIGHT))
+            },
+        
+            animation_slowdown_level: 60 // Sets The Timeout Between Sprite Animations (Every 60th Frame)
+        })
+
+        all_health_bonuses.push(health_bonus) // Stores The New Health Bonus To All Health Bonuses
+    }
     
     // Function For Initialize The Main Loop
     function mainLoop():void {
@@ -145,6 +169,21 @@ function initializeGame():void {
         game_ctx.imageSmoothingEnabled = false // Makes Sharp Images
     
         map.draw(game_ctx) // Draws The Map
+
+        // Renders Every Health Bonus
+        for(let i:number = all_health_bonuses.length - 1; i >= 0; i--) {
+            const one_health_bonus:HealthBonus = all_health_bonuses[i] as HealthBonus // Gets The Health Bonus
+
+            one_health_bonus.draw(game_ctx) // Draws The Health Bonus
+            one_health_bonus.update() // Updates The Health Bonus
+
+            // If The Doomguy Picked Up The Health Bonus And Isn't Already Death
+            if(!doomguy.is_death && checkCollision(one_health_bonus, doomguy)) {
+                doomguy.addHealth(10) // Adds Health For The Doomguy
+                all_health_bonuses.splice(i, 1) // Removes The Health Bonus From The All Health Bonuses
+            }
+        }
+
         doomguy.draw(game_ctx) // Draws The Doomguy
         imp.draw(game_ctx) // Draws The Imp
     
