@@ -171,8 +171,15 @@ export class Doomguy {
         }
     }
     // Method For Obtain The Hit
-    gotHit() {
-        this.health -= 25; // Decreases The Health
+    gotHit(from) {
+        // Imp's Fireball
+        if (from === "imp") {
+            this.health -= 50; // Decreases The Health By 25
+        }
+        // Default Health Decreasion
+        else {
+            this.health -= 10; // Decreases The Health By 10
+        }
         // When The Health Gets To 0
         if (this.health <= 0) {
             const DEATHS = ["death", "explode_death"]; // Stores The Possible Death Actions

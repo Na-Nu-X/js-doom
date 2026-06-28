@@ -273,8 +273,16 @@ export class Doomguy {
     }
 
     // Method For Obtain The Hit
-    gotHit():void {
-        this.health -= 25 // Decreases The Health
+    gotHit(from:string):void {
+        // Imp's Fireball
+        if(from === "imp") {
+            this.health -= 50 // Decreases The Health By 25
+        }
+
+        // Default Health Decreasion
+        else {
+            this.health -= 10 // Decreases The Health By 10
+        }
 
         // When The Health Gets To 0
         if(this.health <= 0) {

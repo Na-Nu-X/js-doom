@@ -37,8 +37,8 @@ const imp = new Imp({
     },
     // Sets The Movement Speed
     velocity: {
-        x: 2,
-        y: 2
+        x: 0.5,
+        y: 0.5
     },
     animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
     is_moving: false // Stores The Information That The Doomguy Isn't Moving
@@ -90,7 +90,7 @@ export function getBulletPosition(current_action, position_of_shooter) {
 // Function For Initialize The Main Loop
 function mainLoop() {
     game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
-    imp.update(all_fireballs); // Updates The Imp's Frames
+    imp.update(all_fireballs, doomguy.position, doomguy.is_death); // Updates The Imp's Frames
     imp.draw(game_ctx); // Draws The Imp
     doomguy.is_moving = false; // Stores The Information That The Doomguy Isn't Moving
     // Enables Doomguy's Actions Only If Is Still Alive
@@ -118,6 +118,9 @@ function mainLoop() {
     }
     doomguy.update(); // Updates The Doomguy's Frames
     doomguy.draw(game_ctx); // Draws The Doomguy
+    if (doomguy.is_death) {
+        console.log("Doomguy's Death");
+    }
     // Renders Every Bullet
     for (let i = all_bullets.length - 1; i >= 0; i--) {
         const one_bullet = all_bullets[i]; // Gets The Bullet
@@ -154,7 +157,7 @@ function mainLoop() {
         }
         // If The Fireball Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
         if (!doomguy.is_death && !one_fireball.is_colliding && checkCollision(one_fireball, doomguy, 10)) {
-            doomguy.gotHit(); // Doomguy Obtain The Hit
+            doomguy.gotHit("imp"); // Doomguy Obtain The Hit From The Imp's Fireball
             one_fireball.makeDecal(); // Makes The Decal
             continue;
         }
@@ -190,8 +193,6 @@ window.addEventListener("keydown", function (event) {
         keys.d = true;
     else if (key === " ")
         keys.space = true;
-    if (key === "q")
-        imp.shoot(); // TEST
 });
 // Window Keyup Functionalities
 window.addEventListener("keyup", function (event) {

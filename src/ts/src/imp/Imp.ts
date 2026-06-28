@@ -21,7 +21,8 @@ interface FireballConfig {
     velocity?:Velocity,
     size?:Size,
     direction:string,
-    animation_slowdown_level:number
+    animation_slowdown_level:number,
+    target_position?:Position
 }
 
 export class Imp {
@@ -41,6 +42,8 @@ export class Imp {
     private is_mirrored:boolean
     private frames_counter:number
     private health:number
+    private attack_cooldown_counter:number = 0
+    private attack_cooldown_max:number = 500
 
     constructor({
         position,
@@ -150,52 +153,126 @@ export class Imp {
         }
     }
 
-    // Method For Update The Imp
-    update(all_fireballs:Fireball[]):void {
-        const MAIN_PATH:string = "../../textures/imp/" // Defines The Main Sprite Path
-        const sprite_data = imp_sprites[this.current_action as keyof typeof imp_sprites] // Loads Sprites For The Current Action
-        const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
+    // Metdod For Execute Chase Of The Player
+    private executeChase(player_dx:number, player_dy:number):void {
+        this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
+        this.is_moving = true // Stores The Information That The Imp Is Moving
 
-        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
-        this.is_mirrored = sprite_data.mirrored // Updates The Information If The Sprite Is Mirrored
+        const BUFFER:number = 20 // Sets The Distance From Where The Imp's Direction Will Change
+        const absolute_player_dx:number = Math.abs(player_dx) // Gets The Absolute Horizontal Player Distance
+        const absolute_player_dy:number = Math.abs(player_dy) // Gets The Absolute Vertical Player Distance
 
-        if(this.image.src !== next_source) this.image.src = next_source // Updates The Image Source Only If Differs
+        const previous_action = this.current_action // Stores The Previous Action
 
-        // If The Imp Is Moving Or Shooting
-        if(this.is_moving || this.is_shooting) {
-            // Changes The Sprite Frame Only In Every Selected Period
-            if(this.frames_counter % this.animation_slowdown_level === 0) {
-                this.current_frame += 1 // Increases The Current Sprite Frame
-
-                // When The Sprite Animation Has Finished
-                if(this.current_frame >= this.max_frames) {
-                    // Handles The Shooting Animation Loop
-                    if(this.is_shooting) {
-                        this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
-                        this.current_action = this.current_action.replace("shoot", "move") // Replaces The Shoot Action With The Move Action
-                        this.current_frame = 0 // Resets The Current Sprite Frame Value
-
-                        const fireball_position:Position = getBulletPosition(this.current_action, this.position) // Gets The Fireball Position
-
-                        // Creates The Fireball
-                        const fireball:Fireball = new Fireball({
-                            position: fireball_position, // Sets The Spawn Position
-                            direction: this.current_action, // Sets The Fly Direction
-                            animation_slowdown_level: 30 // Sets The Timeout Between Sprite Animations (Every 30th Frame)
-                        })
-
-                        all_fireballs.push(fireball) // Stores The New Fireball To All Fireballs
-                    }
-                    
-                    else this.current_frame = 0 // Resets The Current Sprite Frame Value
-                }
+        // Decides The Move Action
+        if(Math.abs(absolute_player_dx - absolute_player_dy) > BUFFER) {
+            if(absolute_player_dx > absolute_player_dy) {
+                if(player_dx > 0) this.current_action = "move_right" // Sets The Current Action
+                else this.current_action = "move_left" // Sets The Current Action
+            } 
+            
+            else {
+                if(player_dy > 0) this.current_action = "move_down" // Sets The Current Action
+                else this.current_action = "move_up" // Sets The Current Action
             }
-
-            this.frames_counter += 1 // Increases The Frames Counter Value
         }
 
+        // If The Action Has Changed
+        if(previous_action !== this.current_action) {
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
+        }
+
+        if(this.current_action === "move_up") this.position.y -= this.velocity.y // Moves Up
+        if(this.current_action === "move_left") this.position.x -= this.velocity.x // Moves To The Left
+        if(this.current_action === "move_down") this.position.y += this.velocity.y // Moves Down
+        if(this.current_action === "move_right") this.position.x += this.velocity.x // Moves To The Right
+    }
+
+    // Metdod For Execute Attack Of The Player
+    private executeAttack(all_fireballs:Fireball[], player_dx:number, player_dy:number, player_position:Position):void {
+        this.is_moving = false // Stores The Information That The Imp Isn't Moving
+        this.is_shooting = true // Stores The Information That The Imp Is Shooting
+    
+        if(this.current_action.startsWith("move_")) {
+            const absolute_player_dx:number = Math.abs(player_dx) // Gets The Absolute Horizontal Player Distance
+            const absolute_player_dy:number = Math.abs(player_dy) // Gets The Absolute Vertical Player Distance
+
+            if(absolute_player_dx > absolute_player_dy) {
+                if(player_dx > 0) this.current_action = "shoot_right" // Sets The Current Action
+                else this.current_action = "shoot_left" // Sets The Current Action
+            } 
+            
+            else {
+                if(player_dy > 0) this.current_action = "shoot_down" // Sets The Current Action
+                else this.current_action = "shoot_up" // Sets The Current Action
+            }
+
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
+        }
+    
+        // Changes The Sprite Frame Only In Every Selected Period
+        if(this.frames_counter % this.animation_slowdown_level === 0) {
+            this.current_frame += 1 // Increases The Current Sprite Frame
+
+            // When The Sprite Animation Has Finished
+            if(this.current_frame >= this.max_frames) {
+                if(this.is_shooting) {
+                    this.is_shooting = false // Stores The Information That The Imp Isn't Shooting
+
+                    let shoot_direction:string = this.current_action // Gets The Shoot Direction
+                    const current_player_dx:number = player_position.x - this.position.x // Gets The Horizontal Player Distance
+                    const current_player_dy:number = player_position.y - this.position.y // Gets The Vertical Player Distance
+                    
+                    if(Math.abs(current_player_dx) > Math.abs(current_player_dy)) {
+                        shoot_direction = current_player_dx > 0 ? "shoot_right" : "shoot_left" // Sets The Horizontal Shoot Direction
+                    }
+                    
+                    else {
+                        shoot_direction = current_player_dy > 0 ? "shoot_down" : "shoot_up" // Sets The Vertical Shoot Direction
+                    }
+
+                    const fireball_position:Position = getBulletPosition(shoot_direction, this.position) // Gets The Fireball Position
+                    const fireball_direction:string = shoot_direction.replace("shoot_", "move_") // Gets The Fireball Direction
+
+                    // Creates The Fireball
+                    const fireball:Fireball = new Fireball({
+                        position: fireball_position, // Sets The Spawn Position
+                        direction: fireball_direction, // Sets The Fly Direction
+                        animation_slowdown_level: 10, // Sets The Timeout Between Sprite Animations (Every 10th Frame)
+                        target_position: player_position
+                    })
+
+                    all_fireballs.push(fireball) // Stores The New Fireball To All Fireballs
+
+                    this.attack_cooldown_counter = this.attack_cooldown_max // Resets The Attack Cooldown Counter
+                    this.current_action = shoot_direction.replace("shoot_", "move_") // Replaces The Shoot Action With The Move Action
+                    this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    this.frames_counter = 0 // Resets The Frames Counter Value
+                }
+
+                else this.current_frame = 0 // Resets The Current Sprite Frame Value
+            }
+        }
+
+        this.frames_counter += 1 // Increases The Frames Counter Value
+    }
+
+    // Method For Update The Imp
+    update(all_fireballs:Fireball[], player_position:Position, is_player_death:boolean):void {
+        const ATTACK_RANGE:number = 300 // Defines The Attack Range
+
+        const player_dx:number = player_position.x - this.position.x // Gets The Horizontal Player Distance
+        const player_dy:number = player_position.y - this.position.y // Gets The Vertical Player Distance
+        const player_distance:number = Math.sqrt(player_dx * player_dx + player_dy * player_dy) // Gets The Player Distance
+
+        if(this.attack_cooldown_counter > 0) {
+            this.attack_cooldown_counter--
+        }
+        
         // If The Imp Is Dying
-        else if(this.is_death) {
+        if(this.is_death) {
             // Changes The Sprite Frame Only In Every Selected Period
             if(this.frames_counter % this.animation_slowdown_level === 0) {
                 this.current_frame += 1 // Increases The Current Sprite Frame
@@ -208,51 +285,45 @@ export class Imp {
 
             this.frames_counter += 1 // Increases The Frames Counter Value
         }
-        
-        // If The Imp Is Standing
-        else {
-            this.current_frame = 0 // Resets The Current Sprite Frame Value
-            this.frames_counter = 0 // Resets The Frames Counter Value
+
+        // If The Player Is Alive
+        else if(!is_player_death) {
+            // Chases The Player
+            if(player_distance > ATTACK_RANGE) {
+                this.executeChase(player_dx, player_dy) // Executes The Chase
+                
+                // Changes The Sprite Frame Only In Every Selected Period
+                if(this.frames_counter % this.animation_slowdown_level === 0) {
+                    this.current_frame += 1 // Increases The Current Sprite Frame
+    
+                    // When The Sprite Animation Has Finished
+                    if(this.current_frame >= this.max_frames) {
+                        this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    }
+                }
+    
+                this.frames_counter += 1 // Increases The Frames Counter Value
+            }
+    
+            // Attacks The Player
+            else if(player_distance <= ATTACK_RANGE && this.attack_cooldown_counter === 0) {
+                this.executeAttack(all_fireballs, player_dx, player_dy, player_position) // Executes The Attack
+            }
         }
-    }
+        
+        const MAIN_PATH:string = "../../textures/imp/" // Defines The Main Sprite Path
+        const sprite_data = imp_sprites[this.current_action as keyof typeof imp_sprites] // Loads Sprites For The Current Action
 
-    // Method For Move Up The Imp
-    moveUp():void {
-        this.position.y -= this.velocity.x // Moves Up
-        this.is_moving = true // Stores The Information That The Imp Is Moving
-        if(!this.is_shooting) this.current_action = "move_up" // Sets The Current Action
-    }
+        if(this.current_frame >= sprite_data.frames.length) this.current_frame = 0 // Resets The Current Sprite Frame Value
 
-    // Method For Move Left The Imp
-    moveLeft():void {
-        this.position.x -= this.velocity.x // Moves To The Left
-        this.is_moving = true // Stores The Information That The Imp Is Moving
-        if(!this.is_shooting) this.current_action = "move_left" // Sets The Current Action
-    }
+        const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
 
-    // Method For Move Down The Imp
-    moveDown():void {
-        this.position.y += this.velocity.x // Moves Down
-        this.is_moving = true // Stores The Information That The Imp Is Moving
-        if(!this.is_shooting) this.current_action = "move_down" // Sets The Current Action
-    }
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+        this.is_mirrored = sprite_data.mirrored // Updates The Information If The Sprite Is Mirrored
 
-    // Method For Move Right The Imp
-    moveRight():void {
-        this.position.x += this.velocity.x // Moves To The Right
-        this.is_moving = true // Stores The Information That The Imp Is Moving
-        if(!this.is_shooting) this.current_action = "move_right" // Sets The Current Action
-    }
-
-    // Method For Shooting
-    shoot():void {
-        // If The Imp Isn't Shooting
-        if(!this.is_shooting) {
-            this.is_shooting = true // Stores The Information That The Imp Is Shooting
-            this.current_frame = 0 // Resets The Current Sprite Frame Value
-            this.frames_counter = 0 // Resets The Frames Counter Value
-
-            if(this.current_action.startsWith("move")) this.current_action = this.current_action.replace("move", "shoot") // Replaces The Move Action With The Shoot Action
+        // Updates The Image Source Only If Differs
+        if(!this.image.src.endsWith(`${sprite_data.frames[this.current_frame]}.png`)) {
+            this.image.src = next_source 
         }
     }
 
@@ -295,32 +366,45 @@ export class Fireball {
     constructor({
         position,
         animation_slowdown_level,
-        direction
+        direction,
+        target_position
     }:FireballConfig) {
+        const SPEED:number = 2 // Defines The Speed
+
         this.position = position
 
-        // Sets The Movement Speed
-        this.velocity = { 
-            x: 3,
-            y: 3
-        },
+        if(target_position) {
+            const target_dx:number = target_position.x - this.position.x // Gets The Horizontal Target Distance
+            const target_dy:number = target_position.y - this.position.y // Gets The Vertical Target Distance
+            const angle:number = Math.atan2(target_dy, target_dx) // Gets The Angle To The Target
 
-        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
-
-        this.scale = 2
-
-        this.image = new Image()
-        this.image.src = "../../textures/imp_fireball/BAL1A0.png"
+            // Sets The Movement Speed
+            this.velocity = {
+                x: Math.cos(angle) * SPEED,
+                y: Math.sin(angle) * SPEED
+            }
+        } 
         
-        this.is_colliding = false // Stores The Information If The Fireball Is Colliding
-        this.direction = direction
-
-        // Sets The Size Of The Flying Fireball
-        this.size = {
-            width: this.image.width,
-            height: this.image.height
+        else {
+            // Sets The Fallback Movement Speed (If The Target Position Isn't Defined)
+            this.velocity = { 
+                x: 2,
+                y: 2
+            }
         }
 
+        // Sets The Default Size Of The Fireball
+        this.size = {
+            width: 0, 
+            height: 0
+        }
+
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+        this.scale = 2 // Sets The Size Scale
+        this.image = new Image()
+        this.image.src = "../../textures/imp_fireball/BAL1A0.png"
+        this.is_colliding = false // Stores The Information If The Fireball Is Colliding
+        this.direction = direction // Sets The Direction
         this.current_frame = 0 // Sets The Initial Current Sprite Frame
         this.max_frames = imp_fireball_sprites.fly.frames.length // Sets The Default Amount Of Maximum Sprite Frames
         this.frames_counter = 0 // Sets The Initial Frames Counter Value
@@ -332,27 +416,16 @@ export class Fireball {
 
     // Method For Draw The Fireball
     draw(ctx:CanvasRenderingContext2D):void {
-        if(!this.is_colliding) {
-            ctx.drawImage(
-                this.image,
-                this.position.x - (this.size.width / 2),
-                this.position.y - (this.size.height / 2),
-                this.size.width,
-                this.size.height
-            )
-        }
-
-        else {
-            ctx.drawImage(
-                this.image,
-                this.position.x - (this.size.width / 2),
-                this.position.y - (this.size.height / 2),
-                this.size.width,
-                this.size.height
-            )
-        }
+        ctx.drawImage(
+            this.image,
+            this.position.x - (this.size.width / 2),
+            this.position.y - (this.size.height / 2),
+            this.size.width,
+            this.size.height
+        )
     }
 
+    // Method For Update The Fireball
     update():void {
         const MAIN_PATH:string = "../../textures/imp_fireball/" // Defines The Main Sprite Path
         const sprite_data = imp_fireball_sprites[this.current_action as keyof typeof imp_fireball_sprites] // Loads Sprites For The Current Action
@@ -375,10 +448,8 @@ export class Fireball {
 
         // Moves The Fireball
         if(!this.is_colliding) {
-            if(this.direction === "move_up") this.position.y -= this.velocity.y
-            if(this.direction === "move_left") this.position.x -= this.velocity.x
-            if(this.direction === "move_down") this.position.y += this.velocity.y
-            if(this.direction === "move_right") this.position.x += this.velocity.x
+            this.position.x += this.velocity.x
+            this.position.y += this.velocity.y
         }
 
         // Changes The Sprite Frame Only In Every Selected Period
@@ -398,17 +469,17 @@ export class Fireball {
                         this.can_be_removed = true // Stores The Information That The Fireball Can Be Removed
                     }
                 }
-                
+
                 this.current_frame = 0 // Resets The Current Sprite Frame Value
             }
         }
 
-        this.frames_counter += 1 // Increases The Frames Counter Value (TOTO TERAZ BEŽÍ VŽDY)
+        this.frames_counter += 1 // Increases The Frames Counter Value
     }
 
     // Method For Make The Fireball Decal
     makeDecal():void {
-        this.is_colliding = true
+        this.is_colliding = true // Stores The Information That The Fireball Is Colliding
         this.current_action = "impact" // Sets The Current Action
         this.current_frame = 0 // Resets The Current Sprite Frame Value
     }

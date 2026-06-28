@@ -50,7 +50,7 @@ export declare class Doomguy {
     moveDown(): void;
     moveRight(): void;
     shoot(): void;
-    gotHit(): void;
+    gotHit(from: string): void;
 }
 export declare class Bullet {
     position: Position;

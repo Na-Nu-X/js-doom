@@ -11,6 +11,7 @@ interface FireballConfig {
     size?: Size;
     direction: string;
     animation_slowdown_level: number;
+    target_position?: Position;
 }
 export declare class Imp {
     position: Position;
@@ -28,14 +29,13 @@ export declare class Imp {
     private is_mirrored;
     private frames_counter;
     private health;
+    private attack_cooldown_counter;
+    private attack_cooldown_max;
     constructor({ position, velocity, animation_slowdown_level }: ImpConfig);
     draw(ctx: CanvasRenderingContext2D): void;
-    update(all_fireballs: Fireball[]): void;
-    moveUp(): void;
-    moveLeft(): void;
-    moveDown(): void;
-    moveRight(): void;
-    shoot(): void;
+    private executeChase;
+    private executeAttack;
+    update(all_fireballs: Fireball[], player_position: Position, is_player_death: boolean): void;
     gotHit(): void;
 }
 export declare class Fireball {
@@ -54,7 +54,7 @@ export declare class Fireball {
     private current_action;
     private collision_loops;
     private last_image_source;
-    constructor({ position, animation_slowdown_level, direction }: FireballConfig);
+    constructor({ position, animation_slowdown_level, direction, target_position }: FireballConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
     makeDecal(): void;
