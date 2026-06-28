@@ -42,6 +42,7 @@ export class Doomguy {
     current_action:string
     health:number
     is_death:boolean
+    is_death_animation_finished:boolean
 
     private scale:number
     private image:HTMLImageElement
@@ -87,6 +88,7 @@ export class Doomguy {
 
         this.health = 100 // Stores The Health Amount
         this.is_death = false // Checks If The Doomguy Is Dying
+        this.is_death_animation_finished = false // Stores The Information If The Death Animation Is Finished
     }
     
     // Method For Draw The Doomguy
@@ -218,6 +220,7 @@ export class Doomguy {
                 // When The Sprite Animation Has Finished
                 if(this.current_frame >= this.max_frames) {
                     this.current_frame = this.max_frames - 1 // Stays At The Last Frame
+                    this.is_death_animation_finished = true // Stores The Information That The Death Animation Has Ended
                 }
             }
 

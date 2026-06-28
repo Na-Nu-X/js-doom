@@ -34,6 +34,7 @@ export declare class Doomguy {
     current_action: string;
     health: number;
     is_death: boolean;
+    is_death_animation_finished: boolean;
     private scale;
     private image;
     private current_frame;

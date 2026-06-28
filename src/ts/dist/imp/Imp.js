@@ -148,7 +148,7 @@ export class Imp {
                     else {
                         shoot_direction = current_player_dy > 0 ? "shoot_down" : "shoot_up"; // Sets The Vertical Shoot Direction
                     }
-                    const fireball_position = getBulletPosition(shoot_direction, this.position); // Gets The Fireball Position
+                    const fireball_position = getBulletPosition(shoot_direction, this.position, this.size); // Gets The Fireball Position
                     const fireball_direction = shoot_direction.replace("shoot_", "move_"); // Gets The Fireball Direction
                     // Creates The Fireball
                     const fireball = new Fireball({

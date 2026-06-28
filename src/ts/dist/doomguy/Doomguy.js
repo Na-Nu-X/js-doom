@@ -10,6 +10,7 @@ export class Doomguy {
     current_action;
     health;
     is_death;
+    is_death_animation_finished;
     scale;
     image;
     current_frame;
@@ -41,6 +42,7 @@ export class Doomguy {
         this.last_image_source = "../../textures/doomguy/PLAYA1.png"; // Stores The Last Image Source
         this.health = 100; // Stores The Health Amount
         this.is_death = false; // Checks If The Doomguy Is Dying
+        this.is_death_animation_finished = false; // Stores The Information If The Death Animation Is Finished
     }
     // Method For Draw The Doomguy
     draw(ctx) {
@@ -120,6 +122,7 @@ export class Doomguy {
                 // When The Sprite Animation Has Finished
                 if (this.current_frame >= this.max_frames) {
                     this.current_frame = this.max_frames - 1; // Stays At The Last Frame
+                    this.is_death_animation_finished = true; // Stores The Information That The Death Animation Has Ended
                 }
             }
             this.frames_counter += 1; // Increases The Frames Counter Value
