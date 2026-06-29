@@ -35,7 +35,7 @@ export class Imp {
         this.max_frames = imp_sprites.move_down.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
         this.is_mirrored = false; // Sets The Default Information If The Sprite Is Mirrored
         this.frames_counter = 0; // Sets The Initial Frames Counter Value
-        this.current_action = "move_up"; // Stores The Current Used Sprite
+        this.current_action = "move_down"; // Stores The Current Used Sprite
         this.is_shooting = false; // Checks If The Imp Is Shooting
         this.health = 100; // Stores The Health Amount
         this.is_death = false; // Checks If The Imp Is Dying
@@ -302,7 +302,8 @@ export class Fireball {
         ctx.drawImage(this.image, this.position.x - (this.size.width / 2), this.position.y - (this.size.height / 2), this.size.width, this.size.height);
     }
     // Method For Update The Fireball
-    update() {
+    update(ctx) {
+        this.draw(ctx); // Draws The Fireball
         const MAIN_PATH = "../../textures/imp_fireball/"; // Defines The Main Sprite Path
         const sprite_data = imp_fireball_sprites[this.current_action]; // Loads Sprites For The Current Action
         const next_image_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source

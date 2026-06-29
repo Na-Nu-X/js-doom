@@ -19,10 +19,10 @@ interface DoomguyConfig {
 interface BulletConfig {
     position: Position;
     velocity?: Velocity;
-    animation_slowdown_level: number;
     size?: Size;
     direction: string;
-    can_be_removed?: boolean;
+    animation_slowdown_level: number;
+    target_position?: Position;
 }
 export declare class Doomguy {
     position: Position;
@@ -43,6 +43,7 @@ export declare class Doomguy {
     private frames_counter;
     private shoot_loops;
     private last_image_source;
+    private armor;
     constructor({ position, velocity, animation_slowdown_level }: DoomguyConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
@@ -53,6 +54,7 @@ export declare class Doomguy {
     shoot(): void;
     gotHit(from: string): void;
     addHealth(amount?: number): void;
+    addArmor(amount?: number): void;
 }
 export declare class Bullet {
     position: Position;
@@ -71,8 +73,8 @@ export declare class Bullet {
     private collision_loops;
     private last_image_source;
     constructor({ position, animation_slowdown_level, direction }: BulletConfig);
-    draw(ctx: CanvasRenderingContext2D): void;
-    update(): void;
+    private draw;
+    update(ctx: CanvasRenderingContext2D): void;
     makeDecal(): void;
 }
 export {};

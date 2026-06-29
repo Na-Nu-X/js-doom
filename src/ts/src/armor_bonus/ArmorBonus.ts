@@ -1,16 +1,16 @@
-import { health_bonus as health_bonus_sprites } from "./data.js"
+import { armor_bonus as armor_bonus_sprites } from "./data.js"
 
 import type { 
     Position,
     Size
 } from "../doomguy/Doomguy.js"
 
-interface HealthBonusConfig {
+interface ArmorBonusConfig {
     position:Position,
     animation_slowdown_level:number
 }
 
-export class HealthBonus {
+export class ArmorBonus {
     position:Position
     animation_slowdown_level:number
     size:Size
@@ -25,14 +25,14 @@ export class HealthBonus {
     constructor({
         position,
         animation_slowdown_level
-    }:HealthBonusConfig) {
+    }:ArmorBonusConfig) {
         this.position = position
         this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
 
         this.scale = 2
 
         this.image = new Image()
-        this.image.src = "../../textures/health_bonus/BON1A0.png"
+        this.image.src = "../../textures/armor_bonus/BON2A0.png"
 
         // Sets The Size
         this.size = {
@@ -41,13 +41,13 @@ export class HealthBonus {
         }
 
         this.current_frame = 0 // Sets The Initial Current Sprite Frame
-        this.max_frames = health_bonus_sprites.health_bonus.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.max_frames = armor_bonus_sprites.armor_bonus.frames.length // Sets The Default Amount Of Maximum Sprite Frames
         this.frames_counter = 0 // Sets The Initial Frames Counter Value
 
-        this.current_action = "health_bonus" // Stores The Current Used Sprite
+        this.current_action = "armor_bonus" // Stores The Current Used Sprite
     }
     
-    // Method For Draw The Health Bonus
+    // Method For Draw The Armor Bonus
     private draw(ctx:CanvasRenderingContext2D):void {
         if(!this.image.complete) return // Do Nothing If The Image Isn't Fully Loaded
 
@@ -65,12 +65,12 @@ export class HealthBonus {
         )
     }
 
-    // Method For Update The Health Bonus
+    // Method For Update The Armor Bonus
     update(ctx:CanvasRenderingContext2D) {
-        this.draw(ctx) // Draws The Health Bonus
+        this.draw(ctx) // Draws The Armor Bonus
 
-        const MAIN_PATH:string = "../../textures/health_bonus/" // Defines The Main Sprite Path
-        const sprite_data = health_bonus_sprites[this.current_action as keyof typeof health_bonus_sprites] // Loads Sprites For The Current Action
+        const MAIN_PATH:string = "../../textures/armor_bonus/" // Defines The Main Sprite Path
+        const sprite_data = armor_bonus_sprites[this.current_action as keyof typeof armor_bonus_sprites] // Loads Sprites For The Current Action
         const next_image_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
 
         this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames

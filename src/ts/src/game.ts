@@ -8,15 +8,19 @@ import {
     Imp 
 } from "./imp/Imp.js"
 
+import { 
+    FormerHuman,
+    Bullet as FormerHumanBullet
+} from "./former_human/FormerHuman.js"
+
 import { Map } from "./map/Map.js"
+import { HealthBonus } from "./health_bonus/HealthBonus.js"
+import { ArmorBonus } from "./armor_bonus/ArmorBonus.js"
 
 import type { 
     Position, 
     Size 
 } from "./doomguy/Doomguy.js"
-
-import { HealthBonus } from "./health_bonus/HealthBonus.js"
-import { health_bonus } from "./health_bonus/data.js"
 
 const game:HTMLCanvasElement = document.querySelector(".game") as HTMLCanvasElement // Gets The Game Canvas
 const game_ctx:CanvasRenderingContext2D = game.getContext("2d") as CanvasRenderingContext2D // Gets The Game CTX
@@ -142,10 +146,31 @@ function initializeGame():void {
     
     const all_fireballs:Fireball[] = [] // Stores All Fireballs
 
+    // Creates The Former Human
+    const former_human:FormerHuman = new FormerHuman({
+        // Sets The Spawn Position
+        position: { 
+            x: 100, 
+            y: 100 
+        },
+    
+        // Sets The Movement Speed
+        velocity: { 
+            x: 0.5,
+            y: 0.5
+        },
+    
+        animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+        is_moving: false // Stores The Information That The Doomguy Isn't Moving
+    })
+
+    const all_former_human_bullets:FormerHumanBullet[] = [] // Stores All Bullets From Former Human
+
+    const HEALTH_BONUSES_AMOUNT:number = 10 // Defines The Amount Of Generated Health Bonuses
     const all_health_bonuses:HealthBonus[] = [] // Stores All Health Bonuses
 
-    // Creates 10 Health Bonuses
-    for(let i:number = 0; i < 10; i++) {
+    // Creates Health Bonuses
+    for(let i:number = 0; i < HEALTH_BONUSES_AMOUNT; i++) {
         const SCALE:number = 2 // Defines The Scale
         const HEALTH_BONUS_WIDTH:number = 14 * SCALE // Defines The Width Of The Health Bonus
         const HEALTH_BONUS_HEIGHT:number = 18 * SCALE // Defines The Height Of The Health Bonus
@@ -162,6 +187,28 @@ function initializeGame():void {
 
         all_health_bonuses.push(health_bonus) // Stores The New Health Bonus To All Health Bonuses
     }
+
+    const ARMOR_BONUSES_AMOUNT:number = 5 // Defines The Amount Of Generated Armor Bonuses
+    const all_armor_bonuses:ArmorBonus[] = [] // Stores All Armor Bonuses
+
+    // Creates Armor Bonuses
+    for(let i:number = 0; i < ARMOR_BONUSES_AMOUNT; i++) {
+        const SCALE:number = 2 // Defines The Scale
+        const ARMOR_BONUS_WIDTH:number = 14 * SCALE // Defines The Width Of The Armor Bonus
+        const ARMOR_BONUS_HEIGHT:number = 18 * SCALE // Defines The Height Of The Armor Bonus
+
+        const armor_bonus = new ArmorBonus({
+            // Sets The Spawn Position
+            position: { 
+                x: Math.floor(Math.random() * (window.innerWidth - ARMOR_BONUS_WIDTH)),
+                y: Math.floor(Math.random() * (window.innerHeight - ARMOR_BONUS_HEIGHT))
+            },
+        
+            animation_slowdown_level: 60 // Sets The Timeout Between Sprite Animations (Every 60th Frame)
+        })
+
+        all_armor_bonuses.push(armor_bonus) // Stores The New Armor Bonus To All Armor Bonuses
+    }
     
     // Function For Initialize The Main Loop
     function mainLoop():void {
@@ -174,8 +221,7 @@ function initializeGame():void {
         for(let i:number = all_health_bonuses.length - 1; i >= 0; i--) {
             const one_health_bonus:HealthBonus = all_health_bonuses[i] as HealthBonus // Gets The Health Bonus
 
-            one_health_bonus.draw(game_ctx) // Draws The Health Bonus
-            one_health_bonus.update() // Updates The Health Bonus
+            one_health_bonus.update(game_ctx) // Updates The Health Bonus
 
             // If The Doomguy Picked Up The Health Bonus And Isn't Already Death
             if(!doomguy.is_death && checkCollision(one_health_bonus, doomguy)) {
@@ -184,15 +230,27 @@ function initializeGame():void {
             }
         }
 
-        doomguy.draw(game_ctx) // Draws The Doomguy
+        // Renders Every Armor Bonus
+        for(let i:number = all_armor_bonuses.length - 1; i >= 0; i--) {
+            const one_armor_bonus:ArmorBonus = all_armor_bonuses[i] as ArmorBonus // Gets The Armor Bonus
+
+            one_armor_bonus.update(game_ctx) // Updates The Armor Bonus
+
+            // If The Doomguy Picked Up The Armor Bonus And Isn't Already Death
+            if(!doomguy.is_death && checkCollision(one_armor_bonus, doomguy)) {
+                doomguy.addArmor(10) // Adds Armor For The Doomguy
+                all_armor_bonuses.splice(i, 1) // Removes The Armor Bonus From The All Armor Bonuses
+            }
+        }
+
         imp.draw(game_ctx) // Draws The Imp
+        former_human.draw(game_ctx) // Draws The Former Human
+        doomguy.draw(game_ctx) // Draws The Doomguy
     
         if(game_paused) map.showStartUI(game_ctx) // Shows The Start UI
     
         // If The Game Isn't Paused
         if(!game_paused) {
-            imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Updates The Imp's Frames
-        
             doomguy.is_moving = false // Stores The Information That The Doomguy Isn't Moving
             
             // Enables Doomguy's Actions Only If Is Still Alive
@@ -219,6 +277,8 @@ function initializeGame():void {
                 }
             }
         
+            imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Draws The Imp
+            former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death) // Draws The Former Human
             doomguy.update() // Updates The Doomguy's Frames
         
             // If The Player Has Died
@@ -232,8 +292,7 @@ function initializeGame():void {
             for(let i:number = all_bullets.length - 1; i >= 0; i--) {
                 const one_bullet:Bullet = all_bullets[i] as Bullet // Gets The Bullet
         
-                one_bullet.update() // Updates The Bullet
-                one_bullet.draw(game_ctx) // Draws The Bullet
+                one_bullet.update(game_ctx) // Updates The Bullet
         
                 // Removes The Bullet From The All Bullets
                 if(one_bullet.can_be_removed) {
@@ -244,6 +303,13 @@ function initializeGame():void {
                 // If The Bullet Hit The Imp, Haven't Started The Decal Animation Yet And The Imp Isn't Already Death
                 if(!imp.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
                     imp.gotHit() // Imp Obtain The Hit
+                    one_bullet.makeDecal() // Makes The Decal
+                    continue
+                }
+
+                // If The Bullet Hit The Former Human, Haven't Started The Decal Animation Yet And The Former Human Isn't Already Death
+                if(!former_human.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human, 10)) {
+                    former_human.gotHit() // Former Human Obtain The Hit
                     one_bullet.makeDecal() // Makes The Decal
                     continue
                 }
@@ -263,8 +329,7 @@ function initializeGame():void {
             for(let i:number = all_fireballs.length - 1; i >= 0; i--) {
                 const one_fireball:Fireball = all_fireballs[i] as Fireball // Gets The Fireball
         
-                one_fireball.update() // Updates The Fireball
-                one_fireball.draw(game_ctx) // Draws The Fireball
+                one_fireball.update(game_ctx) // Updates The Fireball
         
                 // Removes The Fireball From The All Fireballs
                 if(one_fireball.can_be_removed) {
@@ -287,6 +352,36 @@ function initializeGame():void {
                     one_fireball.position.y >= window.innerHeight
                 ) {
                     all_fireballs.splice(i, 1) // Removes The Fireball From The All Fireballs
+                }
+            }
+
+            // Renders Every Former Human's Bullet
+            for(let i:number = all_former_human_bullets.length - 1; i >= 0; i--) {
+                const one_bullet:FormerHumanBullet = all_former_human_bullets[i] as FormerHumanBullet // Gets The Bullet
+        
+                one_bullet.update(game_ctx) // Updates The Bullet
+        
+                // Removes The Bullet From The All Bullets
+                if(one_bullet.can_be_removed) {
+                    all_former_human_bullets.splice(i, 1)
+                    continue
+                }
+
+                // If The Bullet Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+                if(!doomguy.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, doomguy, 10)) {
+                    doomguy.gotHit("former_human") // Doomguy Obtain The Hit From The Former Human's Fireball
+                    one_bullet.makeDecal() // Makes The Decal
+                    continue
+                }
+        
+                // If The Bullet Hit The Map Border
+                if(
+                    one_bullet.position.x <= 0 ||
+                    one_bullet.position.x >= window.innerWidth ||
+                    one_bullet.position.y <= 0 || 
+                    one_bullet.position.y >= window.innerHeight
+                ) {
+                    all_former_human_bullets.splice(i, 1) // Removes The Bullet From The All Bullets
                 }
             }
         }

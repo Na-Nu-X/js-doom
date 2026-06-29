@@ -19,6 +19,7 @@ export class Doomguy {
     frames_counter;
     shoot_loops;
     last_image_source;
+    armor;
     constructor({ position, velocity, animation_slowdown_level }) {
         this.position = position;
         this.velocity = velocity;
@@ -43,6 +44,7 @@ export class Doomguy {
         this.health = 100; // Stores The Health Amount
         this.is_death = false; // Checks If The Doomguy Is Dying
         this.is_death_animation_finished = false; // Stores The Information If The Death Animation Is Finished
+        this.armor = 100; // Stores The Armor Amount
     }
     // Method For Draw The Doomguy
     draw(ctx) {
@@ -72,14 +74,20 @@ export class Doomguy {
         // )
         // Health Bar
         if (!this.is_death) {
-            const HEALTH_BAR_WIDTH = 100; // Defines The Width Of The Health Bar
-            const HEALTH_BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
+            const BAR_WIDTH = 100; // Defines The Width Of The Health Bar
+            const BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
             ctx.fillStyle = "black";
             // Creates The Health Bar Background
-            ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT - 5, BAR_WIDTH, BAR_HEIGHT);
             ctx.fillStyle = "red";
             // Creates The Health Bar Indicator
-            ctx.fillRect(this.position.x - HEALTH_BAR_WIDTH / 2, this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, this.health, HEALTH_BAR_HEIGHT);
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT - 5, this.health, BAR_HEIGHT);
+            ctx.fillStyle = "black";
+            // Creates The Armor Bar Background
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT * 2 - 5 * 2, BAR_WIDTH, BAR_HEIGHT);
+            ctx.fillStyle = "blue";
+            // Creates The Armor Bar Indicator
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT * 2 - 5 * 2, this.armor, BAR_HEIGHT);
         }
     }
     // Method For Update The Doomguy
@@ -182,11 +190,42 @@ export class Doomguy {
     gotHit(from) {
         // Imp's Fireball
         if (from === "imp") {
-            this.health -= 50; // Decreases The Health By 25
+            const HEALTH_DAMAGE = 50; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 50; // Defines The Amount Of The Armor Damage
+            // Damage With Armor
+            if (this.armor > 0) {
+                this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
+                if (this.armor >= ARMOR_DAMAGE)
+                    this.armor -= ARMOR_DAMAGE; // Decreases The Armor
+                else
+                    this.armor = 0;
+            }
+            // Damage Without Armor
+            else {
+                this.health -= HEALTH_DAMAGE; // Decreases The Health
+            }
+        }
+        // Former Human's Bullet
+        if (from === "former_human") {
+            const HEALTH_DAMAGE = 25; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 25; // Defines The Amount Of The Armor Damage
+            // Damage With Armor
+            if (this.armor > 0) {
+                this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
+                if (this.armor >= ARMOR_DAMAGE)
+                    this.armor -= ARMOR_DAMAGE; // Decreases The Armor
+                else
+                    this.armor = 0;
+            }
+            // Damage Without Armor
+            else {
+                this.health -= HEALTH_DAMAGE; // Decreases The Health
+            }
         }
         // Default Health Decreasion
         else {
-            this.health -= 10; // Decreases The Health By 10
+            this.health -= 10; // Decreases The Health
+            this.armor -= 10; // Decreases The Armor
         }
         // When The Health Gets To 0
         if (this.health <= 0) {
@@ -201,7 +240,17 @@ export class Doomguy {
     }
     // Method For Add The Health
     addHealth(amount = 10) {
-        this.health += amount; // Increases The Health
+        if (this.health < 100)
+            this.health += amount; // Increases The Health
+        else
+            this.health = 100;
+    }
+    // Method For Add The Armor
+    addArmor(amount = 10) {
+        if (this.armor < 100)
+            this.armor += amount; // Increases The Armor
+        else
+            this.armor = 100;
     }
 }
 export class Bullet {
@@ -271,7 +320,8 @@ export class Bullet {
         }
     }
     // Method For Update The Bullet
-    update() {
+    update(ctx) {
+        this.draw(ctx); // Draws The Bullet
         const MAIN_PATH = "../../textures/shot_decal/"; // Defines The Main Sprite Path
         const sprite_data = shot_decal_sprites[this.current_action]; // Loads Sprites For The Current Action
         const next_image_source = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png`; // Gets The Next Image Source

@@ -1,17 +1,17 @@
 import type { Position, Size, Velocity } from "../doomguy/Doomguy.js";
-interface ImpConfig {
-    position: Position;
-    velocity: Velocity;
-    animation_slowdown_level: number;
-    is_moving: boolean;
-}
-interface FireballConfig {
+export interface FireballConfig {
     position: Position;
     velocity?: Velocity;
     size?: Size;
     direction: string;
     animation_slowdown_level: number;
     target_position?: Position;
+}
+interface ImpConfig {
+    position: Position;
+    velocity: Velocity;
+    animation_slowdown_level: number;
+    is_moving: boolean;
 }
 export declare class Imp {
     position: Position;
@@ -55,8 +55,8 @@ export declare class Fireball {
     private collision_loops;
     private last_image_source;
     constructor({ position, animation_slowdown_level, direction, target_position }: FireballConfig);
-    draw(ctx: CanvasRenderingContext2D): void;
-    update(): void;
+    private draw;
+    update(ctx: CanvasRenderingContext2D): void;
     makeDecal(): void;
 }
 export {};
