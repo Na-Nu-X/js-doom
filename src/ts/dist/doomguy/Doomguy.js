@@ -190,8 +190,8 @@ export class Doomguy {
     gotHit(from) {
         // Imp's Fireball
         if (from === "imp") {
-            const HEALTH_DAMAGE = 50; // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE = 50; // Defines The Amount Of The Armor Damage
+            const HEALTH_DAMAGE = 100 / 3; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 100 / 3; // Defines The Amount Of The Armor Damage
             // Damage With Armor
             if (this.armor > 0) {
                 this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
@@ -209,6 +209,23 @@ export class Doomguy {
         if (from === "former_human") {
             const HEALTH_DAMAGE = 25; // Defines The Amount Of The Health Damage
             const ARMOR_DAMAGE = 25; // Defines The Amount Of The Armor Damage
+            // Damage With Armor
+            if (this.armor > 0) {
+                this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
+                if (this.armor >= ARMOR_DAMAGE)
+                    this.armor -= ARMOR_DAMAGE; // Decreases The Armor
+                else
+                    this.armor = 0;
+            }
+            // Damage Without Armor
+            else {
+                this.health -= HEALTH_DAMAGE; // Decreases The Health
+            }
+        }
+        // Pinky's Bite
+        if (from === "pinky") {
+            const HEALTH_DAMAGE = 50; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 50; // Defines The Amount Of The Armor Damage
             // Damage With Armor
             if (this.armor > 0) {
                 this.health -= HEALTH_DAMAGE / 2; // Decreases The Health

@@ -2,6 +2,7 @@ import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
 import { Fireball, Imp } from "./imp/Imp.js";
 import { FormerHuman, Bullet as FormerHumanBullet } from "./former_human/FormerHuman.js";
 import { Map } from "./map/Map.js";
+import { Pinky } from "./pinky/Pinky.js";
 import { HealthBonus } from "./health_bonus/HealthBonus.js";
 import { ArmorBonus } from "./armor_bonus/ArmorBonus.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
@@ -94,7 +95,7 @@ function initializeGame() {
             y: 0.5
         },
         animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
-        is_moving: false // Stores The Information That The Doomguy Isn't Moving
+        is_moving: false // Stores The Information That The Imp Isn't Moving
     });
     const all_fireballs = []; // Stores All Fireballs
     // Creates The Former Human
@@ -110,9 +111,24 @@ function initializeGame() {
             y: 0.5
         },
         animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
-        is_moving: false // Stores The Information That The Doomguy Isn't Moving
+        is_moving: false // Stores The Information That The Former Human Isn't Moving
     });
     const all_former_human_bullets = []; // Stores All Bullets From Former Human
+    // Creates The Pinky
+    const pinky = new Pinky({
+        // Sets The Spawn Position
+        position: {
+            x: 200,
+            y: 200
+        },
+        // Sets The Movement Speed
+        velocity: {
+            x: 0.5,
+            y: 0.5
+        },
+        animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+        is_moving: false // Stores The Information That The Pinky Isn't Moving
+    });
     const HEALTH_BONUSES_AMOUNT = 10; // Defines The Amount Of Generated Health Bonuses
     const all_health_bonuses = []; // Stores All Health Bonuses
     // Creates Health Bonuses
@@ -174,6 +190,7 @@ function initializeGame() {
         }
         imp.draw(game_ctx); // Draws The Imp
         former_human.draw(game_ctx); // Draws The Former Human
+        pinky.draw(game_ctx); // Draws The Pinky
         doomguy.draw(game_ctx); // Draws The Doomguy
         if (game_paused)
             map.showStartUI(game_ctx); // Shows The Start UI
@@ -203,8 +220,9 @@ function initializeGame() {
                     all_bullets.push(bullet); // Stores The New Bullet To All Bullets
                 }
             }
-            imp.update(all_fireballs, doomguy.position, doomguy.is_death); // Draws The Imp
-            former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death); // Draws The Former Human
+            // imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Updates The Imp
+            // former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death) // Updates The Former Human
+            pinky.update(doomguy.position, doomguy.is_death); // Updates The Pinky
             doomguy.update(); // Updates The Doomguy's Frames
             // If The Player Has Died
             if (doomguy.is_death && doomguy.is_death_animation_finished) {
@@ -286,6 +304,11 @@ function initializeGame() {
                     one_bullet.position.y >= window.innerHeight) {
                     all_former_human_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
                 }
+            }
+            // If The Pinky Is Biting The Doomguy, Hasn't Already Dealt Damage And The Doomguy Isn't Already Death
+            if (!doomguy.is_death && pinky.is_biting && !pinky.has_dealt_damage && checkCollision(pinky, doomguy)) {
+                doomguy.gotHit("pinky"); // Doomguy Obtain The Hit From The Imp's Fireball
+                pinky.has_dealt_damage = true; // Stores The Information That The Pinky Has Dealt Damage To The Player
             }
         }
         requestAnimationFrame(mainLoop); // Loops The Main Loop
