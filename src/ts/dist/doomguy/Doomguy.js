@@ -1,5 +1,6 @@
 import { doomguy as doomguy_sprites } from "./data.js";
 import { shot_decal as shot_decal_sprites } from "./data.js";
+import { checkWallCollision } from "../game.js";
 export class Doomguy {
     position;
     velocity;
@@ -147,32 +148,84 @@ export class Doomguy {
         }
     }
     // Method For Move Up The Doomguy
-    moveUp() {
-        this.position.y -= this.velocity.x; // Moves Up
-        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
-        if (!this.is_shooting)
-            this.current_action = "move_up"; // Sets The Current Action
+    moveUp(collisions) {
+        const BUFFER = 5; // Defines The Deviation
+        // Simulates The Future Player With Changed Position After Moving
+        const future_player = {
+            // Moves Up
+            position: {
+                x: this.position.x,
+                y: this.position.y - this.velocity.y - BUFFER
+            },
+            size: this.size
+        };
+        const is_player_wall_collision = collisions.some(one_collision => checkWallCollision(future_player, one_collision)); // Checks If The Player Is Colliding With Some Wall
+        if (!is_player_wall_collision) {
+            this.position.y -= this.velocity.y; // Moves Up
+            this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+            if (!this.is_shooting)
+                this.current_action = "move_up"; // Sets The Current Action
+        }
     }
     // Method For Move Left The Doomguy
-    moveLeft() {
-        this.position.x -= this.velocity.x; // Moves To The Left
-        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
-        if (!this.is_shooting)
-            this.current_action = "move_left"; // Sets The Current Action
+    moveLeft(collisions) {
+        const BUFFER = 5; // Defines The Deviation
+        // Simulates The Future Player With Changed Position After Moving
+        const future_player = {
+            // Moves To The Left
+            position: {
+                x: this.position.x - this.velocity.x - BUFFER,
+                y: this.position.y
+            },
+            size: this.size
+        };
+        const is_player_wall_collision = collisions.some(one_collision => checkWallCollision(future_player, one_collision)); // Checks If The Player Is Colliding With Some Wall
+        if (!is_player_wall_collision) {
+            this.position.x -= this.velocity.x; // Moves To The Left
+            this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+            if (!this.is_shooting)
+                this.current_action = "move_left"; // Sets The Current Action
+        }
     }
     // Method For Move Down The Doomguy
-    moveDown() {
-        this.position.y += this.velocity.x; // Moves Down
-        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
-        if (!this.is_shooting)
-            this.current_action = "move_down"; // Sets The Current Action
+    moveDown(collisions) {
+        const BUFFER = 5; // Defines The Deviation
+        // Simulates The Future Player With Changed Position After Moving
+        const future_player = {
+            // Moves Down
+            position: {
+                x: this.position.x,
+                y: this.position.y + this.velocity.y + BUFFER
+            },
+            size: this.size
+        };
+        const is_player_wall_collision = collisions.some(one_collision => checkWallCollision(future_player, one_collision)); // Checks If The Player Is Colliding With Some Wall
+        if (!is_player_wall_collision) {
+            this.position.y += this.velocity.y; // Moves Down
+            this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+            if (!this.is_shooting)
+                this.current_action = "move_down"; // Sets The Current Action
+        }
     }
     // Method For Move Right The Doomguy
-    moveRight() {
-        this.position.x += this.velocity.x; // Moves To The Right
-        this.is_moving = true; // Stores The Information That The Doomguy Is Moving
-        if (!this.is_shooting)
-            this.current_action = "move_right"; // Sets The Current Action
+    moveRight(collisions) {
+        const BUFFER = 5; // Defines The Deviation
+        // Simulates The Future Player With Changed Position After Moving
+        const future_player = {
+            // Moves To The Right
+            position: {
+                x: this.position.x + this.velocity.x + BUFFER,
+                y: this.position.y
+            },
+            size: this.size
+        };
+        const is_player_wall_collision = collisions.some(one_collision => checkWallCollision(future_player, one_collision)); // Checks If The Player Is Colliding With Some Wall
+        if (!is_player_wall_collision) {
+            this.position.x += this.velocity.x; // Moves To The Right
+            this.is_moving = true; // Stores The Information That The Doomguy Is Moving
+            if (!this.is_shooting)
+                this.current_action = "move_right"; // Sets The Current Action
+        }
     }
     // Method For Shooting
     shoot() {

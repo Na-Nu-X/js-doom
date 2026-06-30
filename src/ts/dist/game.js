@@ -2,6 +2,7 @@ import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
 import { Fireball, Imp } from "./imp/Imp.js";
 import { FormerHuman, Bullet as FormerHumanBullet } from "./former_human/FormerHuman.js";
 import { Map } from "./map/Map.js";
+import { collisions } from "./map/data.js";
 import { Pinky } from "./pinky/Pinky.js";
 import { HealthBonus } from "./health_bonus/HealthBonus.js";
 import { ArmorBonus } from "./armor_bonus/ArmorBonus.js";
@@ -30,6 +31,21 @@ function checkCollision(rectangle_1, rectangle_2, offset = 0) {
     const rectangle_2_right = rectangle_2.position.x + (rectangle_2.size.width / 2) - offset;
     const rectangle_2_top = rectangle_2.position.y - (rectangle_2.size.height / 2) + offset;
     const rectangle_2_bottom = rectangle_2.position.y + (rectangle_2.size.height / 2) - offset;
+    return (rectangle_1_left < rectangle_2_right &&
+        rectangle_1_right > rectangle_2_left &&
+        rectangle_1_top < rectangle_2_bottom &&
+        rectangle_1_bottom > rectangle_2_top);
+}
+// Function For Check Collision Between Wall And Entities
+export function checkWallCollision(rectangle_1, rectangle_2) {
+    const rectangle_1_left = rectangle_1.position.x - (rectangle_1.size.width / 2);
+    const rectangle_1_right = rectangle_1.position.x + (rectangle_1.size.width / 2);
+    const rectangle_1_top = rectangle_1.position.y - (rectangle_1.size.height / 2);
+    const rectangle_1_bottom = rectangle_1.position.y + (rectangle_1.size.height / 2);
+    const rectangle_2_left = rectangle_2.x;
+    const rectangle_2_right = rectangle_2.x + rectangle_2.width;
+    const rectangle_2_top = rectangle_2.y;
+    const rectangle_2_bottom = rectangle_2.y + rectangle_2.height;
     return (rectangle_1_left < rectangle_2_right &&
         rectangle_1_right > rectangle_2_left &&
         rectangle_1_top < rectangle_2_bottom &&
@@ -167,7 +183,7 @@ function initializeGame() {
     function mainLoop() {
         game_ctx.clearRect(0, 0, game.width, game.height); // Clears The Game CTX
         game_ctx.imageSmoothingEnabled = false; // Makes Sharp Images
-        map.draw(game_ctx); // Draws The Map
+        map.draw(game_ctx, collisions); // Draws The Map
         // Renders Every Health Bonus
         for (let i = all_health_bonuses.length - 1; i >= 0; i--) {
             const one_health_bonus = all_health_bonuses[i]; // Gets The Health Bonus
@@ -200,13 +216,13 @@ function initializeGame() {
             // Enables Doomguy's Actions Only If Is Still Alive
             if (!doomguy.is_death) {
                 if (keys.w && doomguy.position.y > 0 + doomguy.size.height / 2)
-                    doomguy.moveUp(); // Moves The Doomguy Upwards
+                    doomguy.moveUp(collisions); // Moves The Doomguy Upwards
                 else if (keys.a && doomguy.position.x > 0 + doomguy.size.width / 2)
-                    doomguy.moveLeft(); // Moves The Doomguy To The Left
+                    doomguy.moveLeft(collisions); // Moves The Doomguy To The Left
                 else if (keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2)
-                    doomguy.moveDown(); // Moves The Doomguy Downwards
+                    doomguy.moveDown(collisions); // Moves The Doomguy Downwards
                 else if (keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2)
-                    doomguy.moveRight(); // Moves The Doomguy To The Right
+                    doomguy.moveRight(collisions); // Moves The Doomguy To The Right
                 // Doomguy Shoot Functionality
                 if (keys.space && !doomguy.is_shooting) {
                     doomguy.shoot(); // Doomguy Shoots
@@ -222,7 +238,7 @@ function initializeGame() {
             }
             // imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Updates The Imp
             // former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death) // Updates The Former Human
-            pinky.update(doomguy.position, doomguy.is_death); // Updates The Pinky
+            // pinky.update(doomguy.position, doomguy.is_death) // Updates The Pinky
             doomguy.update(); // Updates The Doomguy's Frames
             // If The Player Has Died
             if (doomguy.is_death && doomguy.is_death_animation_finished) {
@@ -248,6 +264,12 @@ function initializeGame() {
                 // If The Bullet Hit The Former Human, Haven't Started The Decal Animation Yet And The Former Human Isn't Already Death
                 if (!former_human.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human, 10)) {
                     former_human.gotHit(); // Former Human Obtain The Hit
+                    one_bullet.makeDecal(); // Makes The Decal
+                    continue;
+                }
+                // If The Bullet Hit The Pinky, Haven't Started The Decal Animation Yet And The Pinky Isn't Already Death
+                if (!pinky.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, pinky, 10)) {
+                    pinky.gotHit(); // Pinky Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }

@@ -311,7 +311,7 @@ export class Pinky {
 
         // When The Health Gets To 0
         if(this.health <= 0) {
-            const DEATHS:string[] = ["death", "explode_death"] // Stores The Possible Death Actions
+            const DEATHS:string[] = ["death"] // Stores The Possible Death Actions
 
             this.is_moving = false // Stores The Information That The Pinky Isn't Moving
             this.is_biting = false // Stores The Information That The Pinky Isn't Biting

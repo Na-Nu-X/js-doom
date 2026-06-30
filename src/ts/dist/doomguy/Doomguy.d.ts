@@ -1,3 +1,4 @@
+import type { Wall } from "../map/data.js";
 export interface Position {
     x: number;
     y: number;
@@ -47,10 +48,10 @@ export declare class Doomguy {
     constructor({ position, velocity, animation_slowdown_level }: DoomguyConfig);
     draw(ctx: CanvasRenderingContext2D): void;
     update(): void;
-    moveUp(): void;
-    moveLeft(): void;
-    moveDown(): void;
-    moveRight(): void;
+    moveUp(collisions: Wall[]): void;
+    moveLeft(collisions: Wall[]): void;
+    moveDown(collisions: Wall[]): void;
+    moveRight(collisions: Wall[]): void;
     shoot(): void;
     gotHit(from: string): void;
     addHealth(amount?: number): void;

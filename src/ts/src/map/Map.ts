@@ -1,6 +1,8 @@
 import { DoomFont } from "../Font/DoomFont.js"
 
-const doom_font = new DoomFont()
+import type { Wall } from "./data.js"
+
+const doom_font:DoomFont = new DoomFont() // Creates The Doom Font
 
 export class Map {
     private image:HTMLImageElement
@@ -13,7 +15,7 @@ export class Map {
     }
     
     // Method For Draw The Map
-    draw(ctx:CanvasRenderingContext2D):void {
+    draw(ctx:CanvasRenderingContext2D, collisions:Wall[]):void {
         if(!this.image.complete) return // Do Nothing If The Image Isn't Fully Loaded
 
         // Shows The Background
@@ -23,6 +25,19 @@ export class Map {
             0,
             0
         )
+
+        // Shows Collision Hitboxes
+
+        // ctx.strokeStyle = "red"
+
+        // collisions.forEach(function(one_collision:Wall):void {
+        //     ctx.strokeRect(
+        //         one_collision.x,
+        //         one_collision.y,
+        //         one_collision.width,
+        //         one_collision.height
+        //     )
+        // })
     }
 
     // Method For Show Start UI
