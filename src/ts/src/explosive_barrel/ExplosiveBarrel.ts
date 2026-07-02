@@ -72,6 +72,35 @@ export class ExplosiveBarrel {
             this.size.width,
             this.size.height
         )
+
+        // // Shows The Hitbox
+
+        // ctx.strokeStyle = "red"
+
+        // ctx.strokeRect(
+        //     this.position.x - this.size.width / 2,
+        //     this.position.y - this.size.height / 2,
+        //     this.size.width,
+        //     this.size.height
+        // )
+
+        // // Shows The Blow Hitbox
+
+        // if(this.is_exploded) {
+        //     ctx.beginPath()
+        //     ctx.strokeStyle = "red"
+        //     ctx.lineWidth = 2
+
+        //     ctx.arc(
+        //         this.position.x ,
+        //         this.position.y ,
+        //         50,
+        //         0,
+        //         Math.PI * 2
+        //     )
+
+        //     ctx.stroke()
+        // }
     }
 
     // Method For Update The Explosive Barrel

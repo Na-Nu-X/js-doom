@@ -243,6 +243,26 @@ function initializeGame() {
         for (let i = all_explosive_barrels.length - 1; i >= 0; i--) {
             const one_explosive_barrel = all_explosive_barrels[i]; // Gets The Explosive Barrel
             one_explosive_barrel.update(game_ctx); // Updates The Explosive Barrel
+            // If The Explosive Barrel's Blast Hit The Doomguy And The Doomguy Isn't Already Death
+            if (!doomguy.is_death && one_explosive_barrel.is_exploded && one_explosive_barrel.can_be_removed && checkCollision(one_explosive_barrel, doomguy, -50)) {
+                doomguy.gotHit("explosive_barrel"); // Doomguy Obtain The Hit From The Explosive Barrel
+            }
+            // If The Explosive Barrel's Blast Hit The Imp And The Imp Isn't Already Death
+            if (!imp.is_death && one_explosive_barrel.is_exploded && one_explosive_barrel.can_be_removed && checkCollision(one_explosive_barrel, imp, -50)) {
+                imp.gotHit(); // Imp Obtain The Hit From The Explosive Barrel
+            }
+            // If The Explosive Barrel's Blast Hit The Former Human And The Former Human Isn't Already Death
+            if (!former_human.is_death && one_explosive_barrel.is_exploded && one_explosive_barrel.can_be_removed && checkCollision(one_explosive_barrel, former_human, -50)) {
+                former_human.gotHit(); // Former Human Obtain The Hit From The Explosive Barrel
+            }
+            // If The Explosive Barrel's Blast Hit The Former Human Sergeant And The Former Human Sergeant Isn't Already Death
+            if (!former_human_sergeant.is_death && one_explosive_barrel.is_exploded && one_explosive_barrel.can_be_removed && checkCollision(one_explosive_barrel, former_human_sergeant, -50)) {
+                former_human_sergeant.gotHit(); // Former Human Sergeant Obtain The Hit From The Explosive Barrel
+            }
+            // If The Explosive Barrel's Blast Hit The Pinky And The Pinky Isn't Already Death
+            if (!pinky.is_death && one_explosive_barrel.is_exploded && one_explosive_barrel.can_be_removed && checkCollision(one_explosive_barrel, pinky, -50)) {
+                pinky.gotHit(); // Pinky Obtain The Hit From The Explosive Barrel
+            }
             // Removes The Explosive Barrel From The All Explosive Barrels
             if (one_explosive_barrel.can_be_removed) {
                 all_explosive_barrels.splice(i, 1);
@@ -293,7 +313,7 @@ function initializeGame() {
                 is_death = true; // Sets The Information That The Player Is Death
                 return;
             }
-            // Renders Every Bullet
+            // Renders Every Doomguy's Bullet
             for (let i = all_bullets.length - 1; i >= 0; i--) {
                 const one_bullet = all_bullets[i]; // Gets The Bullet
                 one_bullet.update(game_ctx); // Updates The Bullet
@@ -302,35 +322,37 @@ function initializeGame() {
                     all_bullets.splice(i, 1);
                     continue;
                 }
-                // If The Bullet Hit The Imp, Haven't Started The Decal Animation Yet And The Imp Isn't Already Death
+                // If The Bullet Hit The Imp, Hasn't Started The Decal Animation Yet And The Imp Isn't Already Death
                 if (!imp.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
                     imp.gotHit(); // Imp Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
-                // If The Bullet Hit The Former Human, Haven't Started The Decal Animation Yet And The Former Human Isn't Already Death
+                // If The Bullet Hit The Former Human, Hasn't Started The Decal Animation Yet And The Former Human Isn't Already Death
                 if (!former_human.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human, 10)) {
                     former_human.gotHit(); // Former Human Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
-                // If The Bullet Hit The Former Human Sergeant, Haven't Started The Decal Animation Yet And The Former Human Sergeant Isn't Already Death
+                // If The Bullet Hit The Former Human Sergeant, Hasn't Started The Decal Animation Yet And The Former Human Sergeant Isn't Already Death
                 if (!former_human_sergeant.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human_sergeant, 10)) {
                     former_human_sergeant.gotHit(); // Former Human Sergeant Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
-                // If The Bullet Hit The Pinky, Haven't Started The Decal Animation Yet And The Pinky Isn't Already Death
+                // If The Bullet Hit The Pinky, Hasn't Started The Decal Animation Yet And The Pinky Isn't Already Death
                 if (!pinky.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, pinky, 10)) {
                     pinky.gotHit(); // Pinky Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
-                // If The Bullet Hit Some Explosive Barrel And The Explosive Barrel Hasn't Exploded Yet
-                all_explosive_barrels.forEach(function (one_explosive_barrel, index) {
-                    if (!one_explosive_barrel.is_exploded) {
+                // If The Bullet Hit Some Explosive Barrel
+                all_explosive_barrels.forEach(function (one_explosive_barrel) {
+                    // If The Explosive Barrel Hasn't Exploded Yet And The Bullet Hasn't Started The Decal Animation Yet
+                    if (!one_explosive_barrel.is_exploded && !one_bullet.is_colliding) {
                         if (checkCollision(one_bullet, one_explosive_barrel, 10)) {
-                            one_bullet.can_be_removed = true; // Stores The Information That The Bullet Can Be Removed
+                            one_bullet.current_action = "wall_hit";
+                            one_bullet.makeDecal(); // Makes The Decal
                             one_explosive_barrel.gotHit(); // Explosive Barrel Obtain The Hit
                         }
                     }
@@ -352,7 +374,7 @@ function initializeGame() {
                     all_fireballs.splice(i, 1);
                     continue;
                 }
-                // If The Fireball Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+                // If The Fireball Hit The Doomguy, Hasn't Started The Decal Animation Yet And The Doomguy Isn't Already Death
                 if (!doomguy.is_death && !one_fireball.is_colliding && checkCollision(one_fireball, doomguy, 10)) {
                     doomguy.gotHit("imp"); // Doomguy Obtain The Hit From The Imp's Fireball
                     one_fireball.makeDecal(); // Makes The Decal
@@ -375,7 +397,7 @@ function initializeGame() {
                     all_former_human_bullets.splice(i, 1);
                     continue;
                 }
-                // If The Bullet Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+                // If The Bullet Hit The Doomguy, Hasn't Started The Decal Animation Yet And The Doomguy Isn't Already Death
                 if (!doomguy.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, doomguy, 10)) {
                     doomguy.gotHit("former_human"); // Doomguy Obtain The Hit From The Former Human's Bullet
                     one_bullet.makeDecal(); // Makes The Decal
@@ -398,7 +420,7 @@ function initializeGame() {
                     all_former_human_sergeant_bullets.splice(i, 1);
                     continue;
                 }
-                // If The Bullet Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+                // If The Bullet Hit The Doomguy, Hasn't Started The Decal Animation Yet And The Doomguy Isn't Already Death
                 if (!doomguy.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, doomguy, 10)) {
                     doomguy.gotHit("former_human_sergeant"); // Doomguy Obtain The Hit From The Former Human Sergeant's Bullet
                     one_bullet.makeDecal(); // Makes The Decal

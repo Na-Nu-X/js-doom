@@ -309,6 +309,23 @@ export class Doomguy {
                 this.health -= HEALTH_DAMAGE; // Decreases The Health
             }
         }
+        // Explosive Barrel's Blast
+        if (from === "explosive_barrel") {
+            const HEALTH_DAMAGE = 50; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 50; // Defines The Amount Of The Armor Damage
+            // Damage With Armor
+            if (this.armor > 0) {
+                this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
+                if (this.armor >= ARMOR_DAMAGE)
+                    this.armor -= ARMOR_DAMAGE; // Decreases The Armor
+                else
+                    this.armor = 0;
+            }
+            // Damage Without Armor
+            else {
+                this.health -= HEALTH_DAMAGE; // Decreases The Health
+            }
+        }
         // Default Health Decreasion
         else {
             this.health -= 10; // Decreases The Health
@@ -348,12 +365,12 @@ export class Bullet {
     direction;
     can_be_removed;
     is_colliding;
+    current_action;
     scale;
     image;
     current_frame;
     max_frames;
     frames_counter;
-    current_action;
     collision_loops;
     last_image_source;
     constructor({ position, animation_slowdown_level, direction }) {
@@ -365,8 +382,9 @@ export class Bullet {
         },
             this.animation_slowdown_level = animation_slowdown_level; // Sets The Level Of Animation Slowdown
         this.scale = 2;
+        this.current_action = "enemy_hit"; // Stores The Current Used Sprite
         this.image = new Image();
-        this.image.src = "../../textures/shot_decal/BLUDA0.png";
+        this.image.src = this.current_action === "wall_hit" ? "../../textures/shot_decal/PUFFA0.png" : "../../textures/shot_decal/BLUDA0.png";
         this.is_colliding = false; // Stores The Information If The Bullet Is Colliding
         this.direction = direction;
         // Sets The Default Size Of The Flying Bullet
@@ -391,10 +409,9 @@ export class Bullet {
         this.current_frame = 0; // Sets The Initial Current Sprite Frame
         this.max_frames = shot_decal_sprites.enemy_hit.frames.length; // Sets The Default Amount Of Maximum Sprite Frames
         this.frames_counter = 0; // Sets The Initial Frames Counter Value
-        this.current_action = "enemy_hit"; // Stores The Current Used Sprite
         this.collision_loops = 0; // Stores The Amount Of Current Collision Animation's Repetitions
         this.can_be_removed = false; // Stores The Information If The Bullet Can Be Removed
-        this.last_image_source = "../../textures/shot_decal/BLUDA0.png"; // Stores The Last Image Source
+        this.last_image_source = this.current_action === "wall_hit" ? "../../textures/shot_decal/PUFFA0.png" : "../../textures/shot_decal/BLUDA0.png"; // Stores The Last Image Source
     }
     // Method For Draw The Bullet
     draw(ctx) {

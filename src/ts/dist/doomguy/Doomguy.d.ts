@@ -65,12 +65,12 @@ export declare class Bullet {
     direction: string;
     can_be_removed: boolean;
     is_colliding: boolean;
+    current_action: string;
     private scale;
     private image;
     private current_frame;
     private max_frames;
     private frames_counter;
-    private current_action;
     private collision_loops;
     private last_image_source;
     constructor({ position, animation_slowdown_level, direction }: BulletConfig);
