@@ -59,7 +59,7 @@ const keys:{
 // Functions
 
 // Function For Check The Collision Between Two Rectangles
-function checkCollision(rectangle_1:any, rectangle_2:any, offset:number = 0):boolean {
+export function checkCollision(rectangle_1:any, rectangle_2:any, offset:number = 0):boolean {
     const rectangle_1_left:number = rectangle_1.position.x - (rectangle_1.size.width / 2)
     const rectangle_1_right:number = rectangle_1.position.x + (rectangle_1.size.width / 2)
     const rectangle_1_top:number = rectangle_1.position.y - (rectangle_1.size.height / 2)
@@ -385,10 +385,10 @@ function initializeGame():void {
             
             // Enables Doomguy's Actions Only If Is Still Alive
             if(!doomguy.is_death) {
-                if(keys.w && doomguy.position.y > 0 + doomguy.size.height / 2) doomguy.moveUp(collisions) // Moves The Doomguy Upwards
-                else if(keys.a && doomguy.position.x > 0 + doomguy.size.width / 2) doomguy.moveLeft(collisions) // Moves The Doomguy To The Left
-                else if(keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2) doomguy.moveDown(collisions) // Moves The Doomguy Downwards
-                else if(keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2) doomguy.moveRight(collisions) // Moves The Doomguy To The Right
+                if(keys.w && doomguy.position.y > 0 + doomguy.size.height / 2) doomguy.moveUp(collisions, all_explosive_barrels) // Moves The Doomguy Upwards
+                else if(keys.a && doomguy.position.x > 0 + doomguy.size.width / 2) doomguy.moveLeft(collisions, all_explosive_barrels) // Moves The Doomguy To The Left
+                else if(keys.s && doomguy.position.y < window.innerHeight - doomguy.size.height / 2) doomguy.moveDown(collisions, all_explosive_barrels) // Moves The Doomguy Downwards
+                else if(keys.d && doomguy.position.x < window.innerWidth - doomguy.size.width / 2) doomguy.moveRight(collisions, all_explosive_barrels) // Moves The Doomguy To The Right
         
                 // Doomguy Shoot Functionality
                 if(keys.space && !doomguy.is_shooting) {

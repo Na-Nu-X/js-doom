@@ -1,8 +1,13 @@
+import { 
+    checkCollision,
+    checkWallCollision 
+} from "../game.js"
+
 import { doomguy as doomguy_sprites } from "./data.js"
 import { shot_decal as shot_decal_sprites } from "./data.js"
-import { checkWallCollision } from "../game.js"
 
 import type { Wall } from "../map/data.js"
+import type { ExplosiveBarrel } from "../explosive_barrel/ExplosiveBarrel.js"
 
 export interface Position {
     x:number,
@@ -263,7 +268,7 @@ export class Doomguy {
     }
 
     // Method For Move Up The Doomguy
-    moveUp(collisions:Wall[]):void {
+    moveUp(collisions:Wall[], all_explosive_barrels:ExplosiveBarrel[]):void {
         const BUFFER:number = 5 // Defines The Deviation
 
         // Simulates The Future Player With Changed Position After Moving
@@ -278,8 +283,9 @@ export class Doomguy {
         }
 
         const is_player_wall_collision:boolean = collisions.some(one_collision => checkWallCollision(future_player, one_collision)) // Checks If The Player Is Colliding With Some Wall
+        const is_player_explosive_barrel_collision:boolean = all_explosive_barrels.some(one_explosive_barrel => checkCollision(future_player, one_explosive_barrel)) // Checks If The Player Is Colliding With Some Explosive Barrel
 
-        if(!is_player_wall_collision) {
+        if(!is_player_wall_collision && !is_player_explosive_barrel_collision) {
             this.position.y -= this.velocity.y // Moves Up
             this.is_moving = true // Stores The Information That The Doomguy Is Moving
             if(!this.is_shooting) this.current_action = "move_up" // Sets The Current Action
@@ -287,7 +293,7 @@ export class Doomguy {
     }
 
     // Method For Move Left The Doomguy
-    moveLeft(collisions:Wall[]):void {
+    moveLeft(collisions:Wall[], all_explosive_barrels:ExplosiveBarrel[]):void {
         const BUFFER:number = 5 // Defines The Deviation
 
         // Simulates The Future Player With Changed Position After Moving
@@ -302,8 +308,9 @@ export class Doomguy {
         }
 
         const is_player_wall_collision:boolean = collisions.some(one_collision => checkWallCollision(future_player, one_collision)) // Checks If The Player Is Colliding With Some Wall
+        const is_player_explosive_barrel_collision:boolean = all_explosive_barrels.some(one_explosive_barrel => checkCollision(future_player, one_explosive_barrel)) // Checks If The Player Is Colliding With Some Explosive Barrel
 
-        if(!is_player_wall_collision) {
+        if(!is_player_wall_collision && !is_player_explosive_barrel_collision) {
             this.position.x -= this.velocity.x // Moves To The Left
             this.is_moving = true // Stores The Information That The Doomguy Is Moving
             if(!this.is_shooting) this.current_action = "move_left" // Sets The Current Action
@@ -311,7 +318,7 @@ export class Doomguy {
     }
 
     // Method For Move Down The Doomguy
-    moveDown(collisions:Wall[]):void {
+    moveDown(collisions:Wall[], all_explosive_barrels:ExplosiveBarrel[]):void {
         const BUFFER:number = 5 // Defines The Deviation
 
         // Simulates The Future Player With Changed Position After Moving
@@ -326,8 +333,9 @@ export class Doomguy {
         }
 
         const is_player_wall_collision:boolean = collisions.some(one_collision => checkWallCollision(future_player, one_collision)) // Checks If The Player Is Colliding With Some Wall
+        const is_player_explosive_barrel_collision:boolean = all_explosive_barrels.some(one_explosive_barrel => checkCollision(future_player, one_explosive_barrel)) // Checks If The Player Is Colliding With Some Explosive Barrel
 
-        if(!is_player_wall_collision) {
+        if(!is_player_wall_collision && !is_player_explosive_barrel_collision) {
             this.position.y += this.velocity.y // Moves Down
             this.is_moving = true // Stores The Information That The Doomguy Is Moving
             if(!this.is_shooting) this.current_action = "move_down" // Sets The Current Action
@@ -335,7 +343,7 @@ export class Doomguy {
     }
 
     // Method For Move Right The Doomguy
-    moveRight(collisions:Wall[]):void {
+    moveRight(collisions:Wall[], all_explosive_barrels:ExplosiveBarrel[]):void {
         const BUFFER:number = 5 // Defines The Deviation
 
         // Simulates The Future Player With Changed Position After Moving
@@ -350,8 +358,9 @@ export class Doomguy {
         }
         
         const is_player_wall_collision:boolean = collisions.some(one_collision => checkWallCollision(future_player, one_collision)) // Checks If The Player Is Colliding With Some Wall
+        const is_player_explosive_barrel_collision:boolean = all_explosive_barrels.some(one_explosive_barrel => checkCollision(future_player, one_explosive_barrel)) // Checks If The Player Is Colliding With Some Explosive Barrel
 
-        if(!is_player_wall_collision) {
+        if(!is_player_wall_collision && !is_player_explosive_barrel_collision) {
             this.position.x += this.velocity.x // Moves To The Right
             this.is_moving = true // Stores The Information That The Doomguy Is Moving
             if(!this.is_shooting) this.current_action = "move_right" // Sets The Current Action
@@ -373,105 +382,50 @@ export class Doomguy {
 
     // Method For Obtain The Hit
     gotHit(from:string):void {
+        let health_damage:number = 10 // Stores The Amount Of The Health Damage
+        let armor_damage:number = 10 // Stores The Amount Of The Armor Damage
+
         // Imp's Fireball
         if(from === "imp") {
-            const HEALTH_DAMAGE:number = 100 / 3 // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE:number = 100 / 3 // Defines The Amount Of The Armor Damage
-
-            // Damage With Armor
-            if(this.armor > 0) {
-                this.health -= HEALTH_DAMAGE / 2 // Decreases The Health
-
-                if(this.armor >= ARMOR_DAMAGE) this.armor -= ARMOR_DAMAGE // Decreases The Armor
-                else this.armor = 0
-            }
-
-            // Damage Without Armor
-            else {
-                this.health -= HEALTH_DAMAGE // Decreases The Health
-            }
+            health_damage = 100 / 3 // Defines The Amount Of The Health Damage
+            armor_damage = 100 / 3 // Defines The Amount Of The Armor Damage
         }
 
         // Former Human's Bullet
         if(from === "former_human") {
-            const HEALTH_DAMAGE:number = 25 // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE:number = 25 // Defines The Amount Of The Armor Damage
-
-            // Damage With Armor
-            if(this.armor > 0) {
-                this.health -= HEALTH_DAMAGE / 2 // Decreases The Health
-
-                if(this.armor >= ARMOR_DAMAGE) this.armor -= ARMOR_DAMAGE // Decreases The Armor
-                else this.armor = 0
-            }
-
-            // Damage Without Armor
-            else {
-                this.health -= HEALTH_DAMAGE // Decreases The Health
-            }
+            health_damage = 25 // Defines The Amount Of The Health Damage
+            armor_damage = 25 // Defines The Amount Of The Armor Damage
         }
 
         // Former Human Sergeant's Bullet
         if(from === "former_human_sergeant") {
-            const HEALTH_DAMAGE:number = 100 / 3 // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE:number = 100 / 3 // Defines The Amount Of The Armor Damage
-
-            // Damage With Armor
-            if(this.armor > 0) {
-                this.health -= HEALTH_DAMAGE / 2 // Decreases The Health
-
-                if(this.armor >= ARMOR_DAMAGE) this.armor -= ARMOR_DAMAGE // Decreases The Armor
-                else this.armor = 0
-            }
-
-            // Damage Without Armor
-            else {
-                this.health -= HEALTH_DAMAGE // Decreases The Health
-            }
+            health_damage = 100 / 3 // Defines The Amount Of The Health Damage
+            armor_damage = 100 / 3 // Defines The Amount Of The Armor Damage
         }
 
         // Pinky's Bite
         if(from === "pinky") {
-            const HEALTH_DAMAGE:number = 50 // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE:number = 50 // Defines The Amount Of The Armor Damage
-
-            // Damage With Armor
-            if(this.armor > 0) {
-                this.health -= HEALTH_DAMAGE / 2 // Decreases The Health
-
-                if(this.armor >= ARMOR_DAMAGE) this.armor -= ARMOR_DAMAGE // Decreases The Armor
-                else this.armor = 0
-            }
-
-            // Damage Without Armor
-            else {
-                this.health -= HEALTH_DAMAGE // Decreases The Health
-            }
+            health_damage = 50 // Defines The Amount Of The Health Damage
+            armor_damage = 50 // Defines The Amount Of The Armor Damage
         }
 
         // Explosive Barrel's Blast
         if(from === "explosive_barrel") {
-            const HEALTH_DAMAGE:number = 50 // Defines The Amount Of The Health Damage
-            const ARMOR_DAMAGE:number = 50 // Defines The Amount Of The Armor Damage
-
-            // Damage With Armor
-            if(this.armor > 0) {
-                this.health -= HEALTH_DAMAGE / 2 // Decreases The Health
-
-                if(this.armor >= ARMOR_DAMAGE) this.armor -= ARMOR_DAMAGE // Decreases The Armor
-                else this.armor = 0
-            }
-
-            // Damage Without Armor
-            else {
-                this.health -= HEALTH_DAMAGE // Decreases The Health
-            }
+            health_damage = 50 // Defines The Amount Of The Health Damage
+            armor_damage = 50 // Defines The Amount Of The Armor Damage
         }
 
-        // Default Health Decreasion
+        // Damage With Armor
+        if(this.armor > 0) {
+            this.health -= health_damage / 2 // Decreases The Health
+
+            if(this.armor >= armor_damage) this.armor -= armor_damage // Decreases The Armor
+            else this.armor = 0
+        }
+
+        // Damage Without Armor
         else {
-            this.health -= 10 // Decreases The Health
-            this.armor -= 10 // Decreases The Armor
+            this.health -= health_damage // Decreases The Health
         }
 
         // When The Health Gets To 0
