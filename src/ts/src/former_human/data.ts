@@ -107,24 +107,3 @@ export const former_human = {
         mirrored: false
     },
 }
-
-export const imp_fireball = {
-    "fly": {
-        frames: [
-            "BAL1A0",
-            "BAL1B0"
-        ],
-
-        mirrored: false
-    },
-
-    "impact": {
-        frames: [
-            "BAL1C0",
-            "BAL1D0",
-            "BAL1E0"
-        ],
-
-        mirrored: false
-    }
-}

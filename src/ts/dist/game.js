@@ -1,6 +1,7 @@
 import { Doomguy, Bullet } from "./doomguy/Doomguy.js";
 import { Fireball, Imp } from "./imp/Imp.js";
 import { FormerHuman, Bullet as FormerHumanBullet } from "./former_human/FormerHuman.js";
+import { FormerHumanSergeant, Bullet as FormerHumanSergeantBullet } from "./former_human_sergeant/FormerHumanSergeant.js";
 import { Map } from "./map/Map.js";
 import { collisions } from "./map/data.js";
 import { Pinky } from "./pinky/Pinky.js";
@@ -8,8 +9,8 @@ import { HealthBonus } from "./health_bonus/HealthBonus.js";
 import { ArmorBonus } from "./armor_bonus/ArmorBonus.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
 const game_ctx = game.getContext("2d"); // Gets The Game CTX
-game.width = window.innerWidth; // Sets The Game Canvas Width
-game.height = window.innerHeight; // Sets The Game Canvas Height
+game.width = 1920; // Sets The Game Canvas Width
+game.height = 1080; // Sets The Game Canvas Height
 let game_paused = true; // Stores The Information If The Game Is Paused
 let is_death = false; // Stores The Information If The Player Is Death
 // Stores The Information Which Keys Are Pressed
@@ -130,6 +131,22 @@ function initializeGame() {
         is_moving: false // Stores The Information That The Former Human Isn't Moving
     });
     const all_former_human_bullets = []; // Stores All Bullets From Former Human
+    // Creates The Former Human Sergeant
+    const former_human_sergeant = new FormerHumanSergeant({
+        // Sets The Spawn Position
+        position: {
+            x: 300,
+            y: 300
+        },
+        // Sets The Movement Speed
+        velocity: {
+            x: 0.5,
+            y: 0.5
+        },
+        animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+        is_moving: false // Stores The Information That The Former Human Sergeant Isn't Moving
+    });
+    const all_former_human_sergeant_bullets = []; // Stores All Bullets From Former Human Sergeant
     // Creates The Pinky
     const pinky = new Pinky({
         // Sets The Spawn Position
@@ -206,6 +223,7 @@ function initializeGame() {
         }
         imp.draw(game_ctx); // Draws The Imp
         former_human.draw(game_ctx); // Draws The Former Human
+        former_human_sergeant.draw(game_ctx); // Draws The Former Human Sergeant
         pinky.draw(game_ctx); // Draws The Pinky
         doomguy.draw(game_ctx); // Draws The Doomguy
         if (game_paused)
@@ -238,6 +256,7 @@ function initializeGame() {
             }
             // imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Updates The Imp
             // former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death) // Updates The Former Human
+            former_human_sergeant.update(all_former_human_sergeant_bullets, doomguy.position, doomguy.is_death); // Updates The Former Human Sergeant
             // pinky.update(doomguy.position, doomguy.is_death) // Updates The Pinky
             doomguy.update(); // Updates The Doomguy's Frames
             // If The Player Has Died
@@ -264,6 +283,12 @@ function initializeGame() {
                 // If The Bullet Hit The Former Human, Haven't Started The Decal Animation Yet And The Former Human Isn't Already Death
                 if (!former_human.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human, 10)) {
                     former_human.gotHit(); // Former Human Obtain The Hit
+                    one_bullet.makeDecal(); // Makes The Decal
+                    continue;
+                }
+                // If The Bullet Hit The Former Human Sergeant, Haven't Started The Decal Animation Yet And The Former Human Sergeant Isn't Already Death
+                if (!former_human_sergeant.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, former_human_sergeant, 10)) {
+                    former_human_sergeant.gotHit(); // Former Human Sergeant Obtain The Hit
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
@@ -315,7 +340,7 @@ function initializeGame() {
                 }
                 // If The Bullet Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
                 if (!doomguy.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, doomguy, 10)) {
-                    doomguy.gotHit("former_human"); // Doomguy Obtain The Hit From The Former Human's Fireball
+                    doomguy.gotHit("former_human"); // Doomguy Obtain The Hit From The Former Human's Bullet
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
@@ -325,6 +350,29 @@ function initializeGame() {
                     one_bullet.position.y <= 0 ||
                     one_bullet.position.y >= window.innerHeight) {
                     all_former_human_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
+                }
+            }
+            // Renders Every Former Human Sergeant's Bullet
+            for (let i = all_former_human_sergeant_bullets.length - 1; i >= 0; i--) {
+                const one_bullet = all_former_human_sergeant_bullets[i]; // Gets The Bullet
+                one_bullet.update(game_ctx); // Updates The Bullet
+                // Removes The Bullet From The All Bullets
+                if (one_bullet.can_be_removed) {
+                    all_former_human_sergeant_bullets.splice(i, 1);
+                    continue;
+                }
+                // If The Bullet Hit The Doomguy, Haven't Started The Decal Animation Yet And The Doomguy Isn't Already Death
+                if (!doomguy.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, doomguy, 10)) {
+                    doomguy.gotHit("former_human_sergeant"); // Doomguy Obtain The Hit From The Former Human Sergeant's Bullet
+                    one_bullet.makeDecal(); // Makes The Decal
+                    continue;
+                }
+                // If The Bullet Hit The Map Border
+                if (one_bullet.position.x <= 0 ||
+                    one_bullet.position.x >= window.innerWidth ||
+                    one_bullet.position.y <= 0 ||
+                    one_bullet.position.y >= window.innerHeight) {
+                    all_former_human_sergeant_bullets.splice(i, 1); // Removes The Bullet From The All Bullets
                 }
             }
             // If The Pinky Is Biting The Doomguy, Hasn't Already Dealt Damage And The Doomguy Isn't Already Death
@@ -338,11 +386,11 @@ function initializeGame() {
     mainLoop(); // Initializes The Main Loop
 }
 // Events
-// Window Resize Functionality
-window.addEventListener("resize", function () {
-    game.width = window.innerWidth; // Updates The Game Canvas Width
-    game.height = window.innerHeight; // Updates The Game Canvas Height
-});
+// // Window Resize Functionality
+// window.addEventListener("resize", function():void {
+//     game.width = window.innerWidth // Updates The Game Canvas Width
+//     game.height = window.innerHeight // Updates The Game Canvas Height
+// })
 // Global Event Delegations
 // Window Keydown Functionalities
 window.addEventListener("keydown", function (event) {

@@ -73,7 +73,7 @@ export class Doomguy {
         //     this.size.width,
         //     this.size.height
         // )
-        // Health Bar
+        // Health Bar & Armor Bar
         if (!this.is_death) {
             const BAR_WIDTH = 100; // Defines The Width Of The Health Bar
             const BAR_HEIGHT = 5; // Defines The Height Of The Health Bar
@@ -82,13 +82,13 @@ export class Doomguy {
             ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT - 5, BAR_WIDTH, BAR_HEIGHT);
             ctx.fillStyle = "red";
             // Creates The Health Bar Indicator
-            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT - 5, this.health, BAR_HEIGHT);
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT - 5, Math.max(0, this.health), BAR_HEIGHT);
             ctx.fillStyle = "black";
             // Creates The Armor Bar Background
             ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT * 2 - 5 * 2, BAR_WIDTH, BAR_HEIGHT);
             ctx.fillStyle = "blue";
             // Creates The Armor Bar Indicator
-            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT * 2 - 5 * 2, this.armor, BAR_HEIGHT);
+            ctx.fillRect(this.position.x - BAR_WIDTH / 2, this.position.y - this.size.height / 2 - BAR_HEIGHT * 2 - 5 * 2, Math.max(0, this.armor), BAR_HEIGHT);
         }
     }
     // Method For Update The Doomguy
@@ -262,6 +262,23 @@ export class Doomguy {
         if (from === "former_human") {
             const HEALTH_DAMAGE = 25; // Defines The Amount Of The Health Damage
             const ARMOR_DAMAGE = 25; // Defines The Amount Of The Armor Damage
+            // Damage With Armor
+            if (this.armor > 0) {
+                this.health -= HEALTH_DAMAGE / 2; // Decreases The Health
+                if (this.armor >= ARMOR_DAMAGE)
+                    this.armor -= ARMOR_DAMAGE; // Decreases The Armor
+                else
+                    this.armor = 0;
+            }
+            // Damage Without Armor
+            else {
+                this.health -= HEALTH_DAMAGE; // Decreases The Health
+            }
+        }
+        // Former Human Sergeant's Bullet
+        if (from === "former_human_sergeant") {
+            const HEALTH_DAMAGE = 100 / 3; // Defines The Amount Of The Health Damage
+            const ARMOR_DAMAGE = 100 / 3; // Defines The Amount Of The Armor Damage
             // Damage With Armor
             if (this.armor > 0) {
                 this.health -= HEALTH_DAMAGE / 2; // Decreases The Health

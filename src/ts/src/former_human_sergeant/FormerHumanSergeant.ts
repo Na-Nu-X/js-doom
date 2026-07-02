@@ -1,0 +1,510 @@
+import { former_human_sergeant as former_human_sergeant_sprites } from "./data.js"
+import { shot_decal as shot_decal_sprites } from "../doomguy/data.js"
+import { getBulletPosition } from "../game.js"
+
+import type { 
+    Position, 
+    Size, 
+    Velocity 
+} from "../doomguy/Doomguy.js"
+
+import type { FireballConfig as BulletConfig } from "../imp/Imp.js"
+
+interface FormerHumanSergeantConfig {
+    position:Position,
+    velocity:Velocity,
+    animation_slowdown_level:number,
+    is_moving:boolean,
+}
+
+export class FormerHumanSergeant {
+    position:Position
+    velocity:Velocity
+    animation_slowdown_level:number
+    is_moving:boolean
+    size:Size
+    is_shooting:boolean
+    current_action:string
+    is_death:boolean
+    
+    private scale:number
+    private image:HTMLImageElement
+    private current_frame:number
+    private max_frames:number
+    private is_mirrored:boolean
+    private frames_counter:number
+    private health:number
+    private attack_cooldown_counter:number = 0
+    private attack_cooldown_max:number = 300
+
+    constructor({
+        position,
+        velocity,
+        animation_slowdown_level
+    }:FormerHumanSergeantConfig) {
+        this.position = position
+        this.velocity = velocity
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+        this.is_moving = false // Stores The Information If The Former Human Is Moving
+
+        this.scale = 2
+
+        this.image = new Image()
+        this.image.src = "../../textures/former_human_sergeant/SPOSA1.png"
+
+        this.size = {
+            width: this.image.width * this.scale,
+            height: this.image.height * this.scale
+        }
+
+        this.current_frame = 0 // Sets The Initial Current Sprite Frame
+        this.max_frames = former_human_sergeant_sprites.move_down.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.is_mirrored = false // Sets The Default Information If The Sprite Is Mirrored
+        this.frames_counter = 0 // Sets The Initial Frames Counter Value
+
+        this.current_action = "move_down" // Stores The Current Used Sprite
+
+        this.is_shooting = false // Checks If The Former Human Is Shooting
+
+        this.health = 100 // Stores The Health Amount
+        this.is_death = false // Checks If The Former Human Is Dying
+    }
+    
+    // Method For Draw The Former Human
+    draw(ctx:CanvasRenderingContext2D):void {
+        if(!this.image.complete) return // Do Nothing If The Image Isn't Fully Loaded
+
+        this.size.width = this.image.width * this.scale // Sets The Hitbox Width
+        this.size.height = this.image.height * this.scale // Sets The Hitbox Height
+
+        // Shows The Sprite
+
+        // Mirrored Sprite
+        if(this.is_mirrored) {
+            ctx.save() // Saves The Current Canvas State
+            ctx.scale(-1, 1) // Inverts The X Axis
+
+            ctx.drawImage(
+                this.image,
+                -this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+
+            ctx.restore() // Restores The Canvas State
+        }
+
+        // Unchanged Sprite
+        else {
+            ctx.drawImage(
+                this.image,
+                this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+        }
+
+        // // Shows The Hitbox
+
+        // ctx.strokeStyle = "red"
+
+        // ctx.strokeRect(
+        //     this.position.x - this.size.width / 2,
+        //     this.position.y - this.size.height / 2,
+        //     this.size.width,
+        //     this.size.height
+        // )
+
+        // Health Bar
+
+        if(!this.is_death) {
+            const HEALTH_BAR_WIDTH:number = 100 // Defines The Width Of The Health Bar
+            const HEALTH_BAR_HEIGHT:number = 5 // Defines The Height Of The Health Bar
+
+            ctx.fillStyle = "black"
+
+            // Creates The Health Bar Background
+            ctx.fillRect(
+                this.position.x - HEALTH_BAR_WIDTH / 2,
+                this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, 
+                HEALTH_BAR_WIDTH, 
+                HEALTH_BAR_HEIGHT
+            )
+
+            ctx.fillStyle = "red"
+
+            // Creates The Health Bar Indicator
+            ctx.fillRect(
+                this.position.x - HEALTH_BAR_WIDTH / 2,
+                this.position.y - this.size.height / 2 - HEALTH_BAR_HEIGHT - 5, 
+                this.health, 
+                HEALTH_BAR_HEIGHT
+            )
+        }
+    }
+
+    // Metdod For Execute Chase Of The Player
+    private executeChase(player_dx:number, player_dy:number):void {
+        this.is_shooting = false // Stores The Information That The Former Human Isn't Shooting
+        this.is_moving = true // Stores The Information That The Former Human Is Moving
+
+        const BUFFER:number = 20 // Sets The Distance From Where The Former Human's Direction Will Change
+        const absolute_player_dx:number = Math.abs(player_dx) // Gets The Absolute Horizontal Player Distance
+        const absolute_player_dy:number = Math.abs(player_dy) // Gets The Absolute Vertical Player Distance
+
+        const previous_action = this.current_action // Stores The Previous Action
+
+        // Decides The Move Action
+        if(Math.abs(absolute_player_dx - absolute_player_dy) > BUFFER) {
+            if(absolute_player_dx > absolute_player_dy) {
+                if(player_dx > 0) this.current_action = "move_right" // Sets The Current Action
+                else this.current_action = "move_left" // Sets The Current Action
+            } 
+            
+            else {
+                if(player_dy > 0) this.current_action = "move_down" // Sets The Current Action
+                else this.current_action = "move_up" // Sets The Current Action
+            }
+        }
+
+        // If The Action Has Changed
+        if(previous_action !== this.current_action) {
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
+        }
+
+        if(this.current_action === "move_up") this.position.y -= this.velocity.y // Moves Up
+        if(this.current_action === "move_left") this.position.x -= this.velocity.x // Moves To The Left
+        if(this.current_action === "move_down") this.position.y += this.velocity.y // Moves Down
+        if(this.current_action === "move_right") this.position.x += this.velocity.x // Moves To The Right
+    }
+
+    // Metdod For Execute Attack Of The Player
+    private executeAttack(all_bullets:Bullet[], player_dx:number, player_dy:number, player_position:Position):void {
+        this.is_moving = false // Stores The Information That The Former Human Isn't Moving
+        this.is_shooting = true // Stores The Information That The Former Human Is Shooting
+    
+        if(this.current_action.startsWith("move_")) {
+            const absolute_player_dx:number = Math.abs(player_dx) // Gets The Absolute Horizontal Player Distance
+            const absolute_player_dy:number = Math.abs(player_dy) // Gets The Absolute Vertical Player Distance
+
+            if(absolute_player_dx > absolute_player_dy) {
+                if(player_dx > 0) this.current_action = "shoot_right" // Sets The Current Action
+                else this.current_action = "shoot_left" // Sets The Current Action
+            } 
+            
+            else {
+                if(player_dy > 0) this.current_action = "shoot_down" // Sets The Current Action
+                else this.current_action = "shoot_up" // Sets The Current Action
+            }
+
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
+        }
+    
+        // Changes The Sprite Frame Only In Every Selected Period
+        if(this.frames_counter % this.animation_slowdown_level === 0) {
+            this.current_frame += 1 // Increases The Current Sprite Frame
+
+            // When The Sprite Animation Has Finished
+            if(this.current_frame >= this.max_frames) {
+                if(this.is_shooting) {
+                    this.is_shooting = false // Stores The Information That The Former Human Isn't Shooting
+
+                    let shoot_direction:string = this.current_action // Gets The Shoot Direction
+                    const current_player_dx:number = player_position.x - this.position.x // Gets The Horizontal Player Distance
+                    const current_player_dy:number = player_position.y - this.position.y // Gets The Vertical Player Distance
+                    
+                    if(Math.abs(current_player_dx) > Math.abs(current_player_dy)) {
+                        shoot_direction = current_player_dx > 0 ? "shoot_right" : "shoot_left" // Sets The Horizontal Shoot Direction
+                    }
+                    
+                    else {
+                        shoot_direction = current_player_dy > 0 ? "shoot_down" : "shoot_up" // Sets The Vertical Shoot Direction
+                    }
+
+                    const bullet_position:Position = getBulletPosition(shoot_direction, this.position, this.size) // Gets The Bullet Position
+
+                    // Creates The Bullet
+                    const bullet:Bullet = new Bullet({
+                        position: bullet_position, // Sets The Spawn Position
+                        direction: shoot_direction, // Sets The Fly Direction
+                        animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
+                        target_position: player_position
+                    })
+
+                    all_bullets.push(bullet) // Stores The New Bullet To All Bullets
+
+                    this.attack_cooldown_counter = this.attack_cooldown_max // Resets The Attack Cooldown Counter
+                    this.current_action = shoot_direction.replace("shoot_", "move_") // Replaces The Shoot Action With The Move Action
+                    this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    this.frames_counter = 0 // Resets The Frames Counter Value
+                }
+
+                else this.current_frame = 0 // Resets The Current Sprite Frame Value
+            }
+        }
+
+        this.frames_counter += 1 // Increases The Frames Counter Value
+    }
+
+    // Method For Update The Former Human
+    update(all_bullets:Bullet[], player_position:Position, is_player_death:boolean):void {
+        const ATTACK_RANGE:number = 300 // Defines The Attack Range
+
+        const player_dx:number = player_position.x - this.position.x // Gets The Horizontal Player Distance
+        const player_dy:number = player_position.y - this.position.y // Gets The Vertical Player Distance
+        const player_distance:number = Math.sqrt(player_dx * player_dx + player_dy * player_dy) // Gets The Player Distance
+
+        if(this.attack_cooldown_counter > 0) {
+            this.attack_cooldown_counter--
+        }
+        
+        // If The Former Human Is Dying
+        if(this.is_death) {
+            // Changes The Sprite Frame Only In Every Selected Period
+            if(this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1 // Increases The Current Sprite Frame
+
+                // When The Sprite Animation Has Finished
+                if(this.current_frame >= this.max_frames) {
+                    this.current_frame = this.max_frames - 1 // Stays At The Last Frame
+                }
+            }
+
+            this.frames_counter += 1 // Increases The Frames Counter Value
+        }
+
+        // If The Player Is Alive
+        else if(!is_player_death) {
+            // Chases The Player
+            if(player_distance > ATTACK_RANGE) {
+                this.executeChase(player_dx, player_dy) // Executes The Chase
+                
+                // Changes The Sprite Frame Only In Every Selected Period
+                if(this.frames_counter % this.animation_slowdown_level === 0) {
+                    this.current_frame += 1 // Increases The Current Sprite Frame
+    
+                    // When The Sprite Animation Has Finished
+                    if(this.current_frame >= this.max_frames) {
+                        this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    }
+                }
+    
+                this.frames_counter += 1 // Increases The Frames Counter Value
+            }
+    
+            // Attacks The Player
+            else if(player_distance <= ATTACK_RANGE && this.attack_cooldown_counter === 0) {
+                this.executeAttack(all_bullets, player_dx, player_dy, player_position) // Executes The Attack
+            }
+        }
+        
+        const MAIN_PATH:string = "../../textures/former_human_sergeant/" // Defines The Main Sprite Path
+        const sprite_data = former_human_sergeant_sprites[this.current_action as keyof typeof former_human_sergeant_sprites] // Loads Sprites For The Current Action
+
+        if(this.current_frame >= sprite_data.frames.length) this.current_frame = 0 // Resets The Current Sprite Frame Value
+
+        const next_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
+
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+        this.is_mirrored = sprite_data.mirrored // Updates The Information If The Sprite Is Mirrored
+
+        // Updates The Image Source Only If Differs
+        if(!this.image.src.endsWith(`${sprite_data.frames[this.current_frame]}.png`)) {
+            this.image.src = next_source 
+        }
+    }
+
+    // Method For Obtain The Hit
+    gotHit():void {
+        this.health -= 25 // Decreases The Health
+
+        // When The Health Gets To 0
+        if(this.health <= 0) {
+            const DEATHS:string[] = ["death", "explode_death"] // Stores The Possible Death Actions
+
+            this.is_moving = false // Stores The Information That The Former Human Isn't Moving
+            this.is_shooting = false // Stores The Information That The Former Human Isn't Shooting
+            this.is_death = true // Stores The Information That The Former Human Is Dying
+            this.current_frame = 0 // Resets The Current Sprite Frame Value
+            this.frames_counter = 0 // Resets The Frames Counter Value
+            this.current_action = DEATHS[Math.floor(Math.random() * DEATHS.length)] as string // Sets The Current Action
+        }
+    }
+}
+
+export class Bullet {
+    position:Position
+    velocity:Velocity
+    animation_slowdown_level:number
+    size:Size
+    direction:string
+    can_be_removed:boolean
+    is_colliding:boolean
+    
+    private scale:number
+    private angle:number
+    private image:HTMLImageElement
+    private current_frame:number
+    private max_frames:number
+    private frames_counter:number
+    private current_action:string
+    private collision_loops:number
+    private last_image_source:string
+
+    constructor({
+        position,
+        animation_slowdown_level,
+        direction,
+        target_position
+    }:BulletConfig) {
+        const SPEED:number = 2 // Defines The Speed
+
+        this.position = position
+
+        if(target_position) {
+            const target_dx:number = target_position.x - this.position.x // Gets The Horizontal Target Distance
+            const target_dy:number = target_position.y - this.position.y // Gets The Vertical Target Distance
+            const angle:number = Math.atan2(target_dy, target_dx) // Gets The Angle To The Target
+
+            this.angle = Math.atan2(target_dy, target_dx) // Calculates The Bullet's Flying Angle
+
+            // Sets The Movement Speed
+            this.velocity = {
+                x: Math.cos(angle) * SPEED,
+                y: Math.sin(angle) * SPEED
+            }
+        } 
+        
+        else {
+            // Sets The Fallback Movement Speed (If The Target Position Isn't Defined)
+            this.velocity = { 
+                x: 10,
+                y: 10
+            }
+
+            this.angle = Math.atan2(this.velocity.y, this.velocity.x) // Calculates The Bullet's Flying Angle
+        }
+
+        this.animation_slowdown_level = animation_slowdown_level // Sets The Level Of Animation Slowdown
+
+        this.scale = 2
+
+        this.image = new Image()
+        this.image.src = "../../textures/shot_decal/BLUDA0.png"
+        
+        this.is_colliding = false // Stores The Information If The Bullet Is Colliding
+        this.direction = direction
+
+        // Sets The Size Of The Flying Bullet
+        this.size = {
+            width: 20,
+            height: 3
+        }
+
+        this.current_frame = 0 // Sets The Initial Current Sprite Frame
+        this.max_frames = shot_decal_sprites.enemy_hit.frames.length // Sets The Default Amount Of Maximum Sprite Frames
+        this.frames_counter = 0 // Sets The Initial Frames Counter Value
+        this.current_action = "enemy_hit" // Stores The Current Used Sprite
+        this.collision_loops = 0 // Stores The Amount Of Current Collision Animation's Repetitions
+        this.can_be_removed = false // Stores The Information If The Bullet Can Be Removed
+        this.last_image_source = "../../textures/shot_decal/BLUDA0.png" // Stores The Last Image Source
+    }
+
+    // Method For Draw The Bullet
+    private draw(ctx:CanvasRenderingContext2D):void {
+        if(!this.is_colliding) {
+            ctx.save()
+
+            ctx.translate(this.position.x, this.position.y)
+            ctx.rotate(this.angle);
+
+            ctx.fillStyle = "red"
+
+            ctx.fillRect(
+                -this.size.width / 2,
+                -this.size.height / 2,
+                this.size.width,
+                this.size.height
+            );
+
+            ctx.restore()
+        }
+
+        else {
+            ctx.drawImage(
+                this.image,
+                this.position.x - (this.size.width / 2),
+                this.position.y - (this.size.height / 2),
+                this.size.width,
+                this.size.height
+            )
+        }
+    }
+
+    // Method For Update The Bullet
+    update(ctx:CanvasRenderingContext2D):void {
+        this.draw(ctx) // Draws The Bullet
+
+        const MAIN_PATH:string = "../../textures/shot_decal/" // Defines The Main Sprite Path
+        const sprite_data = shot_decal_sprites[this.current_action as keyof typeof shot_decal_sprites] // Loads Sprites For The Current Action
+        const next_image_source:string = `${MAIN_PATH + sprite_data.frames[this.current_frame]}.png` // Gets The Next Image Source
+
+        this.max_frames = sprite_data.frames.length // Updates The Amount Of Maximum Sprite Frames
+
+        if(this.last_image_source !== next_image_source) {
+            this.image.src = next_image_source // Updates The Image Source Only If Differs
+            this.last_image_source = next_image_source // Updates The Last Image Source
+        }
+
+        // Moves The Bullet
+        if(!this.is_colliding) {
+            this.position.x += this.velocity.x
+            this.position.y += this.velocity.y
+        }
+
+        // Shows The Enemy Hit Animation
+        else {
+            // Sets The Size Of The Decal Image
+            this.size = {
+                width: this.image.width * this.scale,
+                height: this.image.height * this.scale
+            }
+
+            // Changes The Sprite Frame Only In Every Selected Period
+            if(this.frames_counter % this.animation_slowdown_level === 0) {
+                this.current_frame += 1 // Increases The Current Sprite Frame
+
+                // When The Sprite Animation Has Finished
+                if(this.current_frame >= this.max_frames) {
+                    // Handles The Enemy Hit Animation Loop
+                    if(this.is_colliding) {
+                        const REPEAT_TIMES:number = 3 // Sets The Amount Of Collision Animation's Repetitions
+
+                        this.collision_loops += 1 // Increases The Amount Of Current Collision Animation's Repetitions
+
+                        // Ends The Collision Animation When The Collision Animation Reached The Maximum Amount Of Loops
+                        if(this.collision_loops >= REPEAT_TIMES) {
+                            this.can_be_removed = true // Stores The Information That The Bullet Can Be Removed
+                            this.current_frame = 0 // Resets The Current Sprite Frame Value
+                        }
+                        
+                        else this.current_frame = 0 // Resets The Current Sprite Frame Value
+                    } 
+                    
+                    else this.current_frame = 0 // Resets The Current Sprite Frame Value
+                }
+            }
+
+            this.frames_counter += 1 // Increases The Frames Counter Value
+        }
+    }
+
+    // Method For Make The Bullet Decal
+    makeDecal():void {
+        this.is_colliding = true
+    }
+}
