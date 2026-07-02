@@ -431,6 +431,15 @@ function initializeGame():void {
                     all_bullets.splice(i, 1)
                     continue
                 }
+
+                // If The Bullet Hit Some Wall
+                collisions.forEach(function(one_collision:Wall):void {
+                    // If The Bullet Hasn't Started The Decal Animation Yet
+                    if(!one_bullet.is_colliding && checkWallCollision(one_bullet, one_collision)) {
+                        one_bullet.current_action = "wall_hit" // Sets The Current Action
+                        one_bullet.makeDecal() // Makes The Decal
+                    }
+                })
         
                 // If The Bullet Hit The Imp, Hasn't Started The Decal Animation Yet And The Imp Isn't Already Death
                 if(!imp.is_death && !one_bullet.is_colliding && checkCollision(one_bullet, imp, 10)) {
@@ -463,12 +472,10 @@ function initializeGame():void {
                 // If The Bullet Hit Some Explosive Barrel
                 all_explosive_barrels.forEach(function(one_explosive_barrel:ExplosiveBarrel):void {
                     // If The Explosive Barrel Hasn't Exploded Yet And The Bullet Hasn't Started The Decal Animation Yet
-                    if(!one_explosive_barrel.is_exploded && !one_bullet.is_colliding) {
-                        if(checkCollision(one_bullet, one_explosive_barrel, 10)) {
-                            one_bullet.current_action = "wall_hit"
-                            one_bullet.makeDecal() // Makes The Decal
-                            one_explosive_barrel.gotHit() // Explosive Barrel Obtain The Hit
-                        }
+                    if(!one_explosive_barrel.is_exploded && !one_bullet.is_colliding && checkCollision(one_bullet, one_explosive_barrel, 10)) {
+                        one_bullet.current_action = "wall_hit" // Sets The Current Action
+                        one_bullet.makeDecal() // Makes The Decal
+                        one_explosive_barrel.gotHit() // Explosive Barrel Obtain The Hit
                     }
                 })
         
