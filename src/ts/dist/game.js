@@ -7,6 +7,7 @@ import { collisions } from "./map/data.js";
 import { Pinky } from "./pinky/Pinky.js";
 import { HealthBonus } from "./health_bonus/HealthBonus.js";
 import { ArmorBonus } from "./armor_bonus/ArmorBonus.js";
+import { ExplosiveBarrel } from "./explosive_barrel/ExplosiveBarrel.js";
 const game = document.querySelector(".game"); // Gets The Game Canvas
 const game_ctx = game.getContext("2d"); // Gets The Game CTX
 game.width = 1920; // Sets The Game Canvas Width
@@ -162,9 +163,9 @@ function initializeGame() {
         animation_slowdown_level: 30, // Sets The Timeout Between Sprite Animations (Every 30th Frame)
         is_moving: false // Stores The Information That The Pinky Isn't Moving
     });
+    // Creates Health Bonuses
     const HEALTH_BONUSES_AMOUNT = 10; // Defines The Amount Of Generated Health Bonuses
     const all_health_bonuses = []; // Stores All Health Bonuses
-    // Creates Health Bonuses
     for (let i = 0; i < HEALTH_BONUSES_AMOUNT; i++) {
         const SCALE = 2; // Defines The Scale
         const HEALTH_BONUS_WIDTH = 14 * SCALE; // Defines The Width Of The Health Bonus
@@ -179,9 +180,9 @@ function initializeGame() {
         });
         all_health_bonuses.push(health_bonus); // Stores The New Health Bonus To All Health Bonuses
     }
+    // Creates Armor Bonuses
     const ARMOR_BONUSES_AMOUNT = 5; // Defines The Amount Of Generated Armor Bonuses
     const all_armor_bonuses = []; // Stores All Armor Bonuses
-    // Creates Armor Bonuses
     for (let i = 0; i < ARMOR_BONUSES_AMOUNT; i++) {
         const SCALE = 2; // Defines The Scale
         const ARMOR_BONUS_WIDTH = 14 * SCALE; // Defines The Width Of The Armor Bonus
@@ -195,6 +196,23 @@ function initializeGame() {
             animation_slowdown_level: 60 // Sets The Timeout Between Sprite Animations (Every 60th Frame)
         });
         all_armor_bonuses.push(armor_bonus); // Stores The New Armor Bonus To All Armor Bonuses
+    }
+    // Creates Explosive Barrels
+    const EXPLOSIVE_BARRELS_AMOUNT = 5; // Defines The Amount Of Generated Explosive Barrels
+    const all_explosive_barrels = []; // Stores All Explosive Barrels
+    for (let i = 0; i < EXPLOSIVE_BARRELS_AMOUNT; i++) {
+        const SCALE = 2; // Defines The Scale
+        const HEALTH_BONUS_WIDTH = 14 * SCALE; // Defines The Width Of The Explosive Barrel
+        const HEALTH_BONUS_HEIGHT = 18 * SCALE; // Defines The Height Of The Explosive Barrel
+        const explosive_barrel = new ExplosiveBarrel({
+            // Sets The Spawn Position
+            position: {
+                x: Math.floor(Math.random() * (window.innerWidth - HEALTH_BONUS_WIDTH)),
+                y: Math.floor(Math.random() * (window.innerHeight - HEALTH_BONUS_HEIGHT))
+            },
+            animation_slowdown_level: 120 // Sets The Timeout Between Sprite Animations (Every 120th Frame)
+        });
+        all_explosive_barrels.push(explosive_barrel); // Stores The New Explosive Barrel To All Explosive Barrels
     }
     // Function For Initialize The Main Loop
     function mainLoop() {
@@ -219,6 +237,16 @@ function initializeGame() {
             if (!doomguy.is_death && checkCollision(one_armor_bonus, doomguy)) {
                 doomguy.addArmor(10); // Adds Armor For The Doomguy
                 all_armor_bonuses.splice(i, 1); // Removes The Armor Bonus From The All Armor Bonuses
+            }
+        }
+        // Renders Every Explosive Barrels
+        for (let i = all_explosive_barrels.length - 1; i >= 0; i--) {
+            const one_explosive_barrel = all_explosive_barrels[i]; // Gets The Explosive Barrel
+            one_explosive_barrel.update(game_ctx); // Updates The Explosive Barrel
+            // Removes The Explosive Barrel From The All Explosive Barrels
+            if (one_explosive_barrel.can_be_removed) {
+                all_explosive_barrels.splice(i, 1);
+                continue;
             }
         }
         imp.draw(game_ctx); // Draws The Imp
@@ -256,7 +284,7 @@ function initializeGame() {
             }
             // imp.update(all_fireballs, doomguy.position, doomguy.is_death) // Updates The Imp
             // former_human.update(all_former_human_bullets, doomguy.position, doomguy.is_death) // Updates The Former Human
-            former_human_sergeant.update(all_former_human_sergeant_bullets, doomguy.position, doomguy.is_death); // Updates The Former Human Sergeant
+            // former_human_sergeant.update(all_former_human_sergeant_bullets, doomguy.position, doomguy.is_death) // Updates The Former Human Sergeant
             // pinky.update(doomguy.position, doomguy.is_death) // Updates The Pinky
             doomguy.update(); // Updates The Doomguy's Frames
             // If The Player Has Died
@@ -298,6 +326,15 @@ function initializeGame() {
                     one_bullet.makeDecal(); // Makes The Decal
                     continue;
                 }
+                // If The Bullet Hit Some Explosive Barrel And The Explosive Barrel Hasn't Exploded Yet
+                all_explosive_barrels.forEach(function (one_explosive_barrel, index) {
+                    if (!one_explosive_barrel.is_exploded) {
+                        if (checkCollision(one_bullet, one_explosive_barrel, 10)) {
+                            one_bullet.can_be_removed = true; // Stores The Information That The Bullet Can Be Removed
+                            one_explosive_barrel.gotHit(); // Explosive Barrel Obtain The Hit
+                        }
+                    }
+                });
                 // If The Bullet Hit The Map Border
                 if (one_bullet.position.x <= 0 ||
                     one_bullet.position.x >= window.innerWidth ||
